@@ -1,0 +1,256 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\NewProjects\\com.flight.api\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.infrastructure\\engines\\otherengines.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|solutionrelative:src\\services\\flight\\core\\flight.infrastructure\\engines\\otherengines.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.infrastructure\\engines\\galileoengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|solutionrelative:src\\services\\flight\\core\\flight.infrastructure\\engines\\galileoengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\interfaces\\iflightengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\interfaces\\iflightengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\features\\searchflight\\searchflightquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\features\\searchflight\\searchflightquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\api\\flight.api\\endpoints\\flight\\searchflightendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|solutionrelative:src\\services\\flight\\api\\flight.api\\endpoints\\flight\\searchflightendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\features\\bookflight\\bookflightcommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\features\\bookflight\\bookflightcommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\features\\getbaggages\\getbaggagesquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\features\\getbaggages\\getbaggagesquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\features\\admin\\agentpartners\\agentpartnercommands.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\features\\admin\\agentpartners\\agentpartnercommands.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\api\\flight.api\\endpoints\\admin\\agentpartners\\agentpartneradminendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|solutionrelative:src\\services\\flight\\api\\flight.api\\endpoints\\admin\\agentpartners\\agentpartneradminendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\api\\flight.api\\endpoints\\booking\\bookingendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D28CE401-ED94-BBBC-086C-511D797FB285}|src\\Services\\Flight\\Api\\Flight.Api\\Flight.Api.csproj|solutionrelative:src\\services\\flight\\api\\flight.api\\endpoints\\booking\\bookingendpoint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5A97363B-A7E8-F31E-D124-60B9F0A5ABF0}|src\\Services\\Flight\\Core\\Flight.Domain\\Flight.Domain.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.domain\\aggregates\\booking\\bookingentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5A97363B-A7E8-F31E-D124-60B9F0A5ABF0}|src\\Services\\Flight\\Core\\Flight.Domain\\Flight.Domain.csproj|solutionrelative:src\\services\\flight\\core\\flight.domain\\aggregates\\booking\\bookingentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5A97363B-A7E8-F31E-D124-60B9F0A5ABF0}|src\\Services\\Flight\\Core\\Flight.Domain\\Flight.Domain.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.domain\\aggregates\\booking\\bookingflightentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5A97363B-A7E8-F31E-D124-60B9F0A5ABF0}|src\\Services\\Flight\\Core\\Flight.Domain\\Flight.Domain.csproj|solutionrelative:src\\services\\flight\\core\\flight.domain\\aggregates\\booking\\bookingflightentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.infrastructure\\services\\commissionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{967FE8C9-0179-B6B2-9A5F-73C3B97B2A74}|src\\Services\\Flight\\Core\\Flight.Infrastructure\\Flight.Infrastructure.csproj|solutionrelative:src\\services\\flight\\core\\flight.infrastructure\\services\\commissionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|d:\\newprojects\\com.flight.api\\src\\services\\flight\\core\\flight.application\\features\\bookflight\\eventhandlers\\bookingcreateddomaineventhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1EC4DA2E-735E-A696-5A2C-C2DCC357F448}|src\\Services\\Flight\\Core\\Flight.Application\\Flight.Application.csproj|solutionrelative:src\\services\\flight\\core\\flight.application\\features\\bookflight\\eventhandlers\\bookingcreateddomaineventhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "OtherEngines.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\OtherEngines.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\OtherEngines.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\OtherEngines.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\OtherEngines.cs",
+              "ViewState": "AgIAAJAAAAAAAAAAAAAEwCMBAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:25:51.077Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "GalileoEngine.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\GalileoEngine.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\GalileoEngine.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\GalileoEngine.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Engines\\GalileoEngine.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:25:20.379Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "IFlightEngine.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Interfaces\\IFlightEngine.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Interfaces\\IFlightEngine.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Interfaces\\IFlightEngine.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Interfaces\\IFlightEngine.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:24:57.453Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "SearchFlightEndpoint.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Flight\\SearchFlightEndpoint.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Flight\\SearchFlightEndpoint.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Flight\\SearchFlightEndpoint.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Flight\\SearchFlightEndpoint.cs",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAgwFUAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:22:26.537Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SearchFlightQuery.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\SearchFlight\\SearchFlightQuery.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\SearchFlight\\SearchFlightQuery.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\SearchFlight\\SearchFlightQuery.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\SearchFlight\\SearchFlightQuery.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAAwDEAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:20:24.845Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "GetBaggagesQuery.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\GetBaggages\\GetBaggagesQuery.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\GetBaggages\\GetBaggagesQuery.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\GetBaggages\\GetBaggagesQuery.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\GetBaggages\\GetBaggagesQuery.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T09:19:29.827Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AgentPartnerCommands.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\Admin\\AgentPartners\\AgentPartnerCommands.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\Admin\\AgentPartners\\AgentPartnerCommands.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\Admin\\AgentPartners\\AgentPartnerCommands.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\Admin\\AgentPartners\\AgentPartnerCommands.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAkwCoAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T08:45:53.497Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "BookingEndpoint.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Booking\\BookingEndpoint.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Booking\\BookingEndpoint.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Booking\\BookingEndpoint.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Booking\\BookingEndpoint.cs",
+              "ViewState": "AgIAAJgAAAAAAAAAAAAkwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T06:23:19.474Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AgentPartnerAdminEndpoint.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Admin\\AgentPartners\\AgentPartnerAdminEndpoint.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Admin\\AgentPartners\\AgentPartnerAdminEndpoint.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Admin\\AgentPartners\\AgentPartnerAdminEndpoint.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Api\\Flight.Api\\Endpoints\\Admin\\AgentPartners\\AgentPartnerAdminEndpoint.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T06:22:59.157Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "BookingFlightEntity.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingFlightEntity.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingFlightEntity.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingFlightEntity.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingFlightEntity.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T03:59:54.698Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "BookingEntity.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingEntity.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingEntity.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingEntity.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Domain\\Aggregates\\Booking\\BookingEntity.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-19T03:59:45.819Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "CommissionService.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Services\\CommissionService.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Services\\CommissionService.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Infrastructure\\Services\\CommissionService.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Infrastructure\\Services\\CommissionService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T13:35:43.805Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BookFlightCommand.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\BookFlightCommand.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\BookFlightCommand.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\BookFlightCommand.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\BookFlightCommand.cs",
+              "ViewState": "AgIAAEwAAAAAAAAAAAAkwF0AAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T13:34:39.359Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "BookingCreatedDomainEventHandler.cs",
+              "DocumentMoniker": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\EventHandlers\\BookingCreatedDomainEventHandler.cs",
+              "RelativeDocumentMoniker": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\EventHandlers\\BookingCreatedDomainEventHandler.cs",
+              "ToolTip": "D:\\NewProjects\\com.flight.api\\src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\EventHandlers\\BookingCreatedDomainEventHandler.cs",
+              "RelativeToolTip": "src\\Services\\Flight\\Core\\Flight.Application\\Features\\BookFlight\\EventHandlers\\BookingCreatedDomainEventHandler.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T13:34:54.668Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

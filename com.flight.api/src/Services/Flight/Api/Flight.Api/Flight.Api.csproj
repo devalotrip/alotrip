@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>Flight.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Carter" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Flight.Application\Flight.Application.csproj" />
+    <ProjectReference Include="..\..\Core\Flight.Infrastructure\Flight.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\BuildingBlocks\Shared.BuildingBlocks\Shared.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\Common\Shared.Common\Shared.Common.csproj" />
+  </ItemGroup>
+
+</Project>

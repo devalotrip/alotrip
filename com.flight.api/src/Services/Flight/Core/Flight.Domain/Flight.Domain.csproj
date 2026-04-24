@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flight.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Shared\BuildingBlocks\Shared.BuildingBlocks\Shared.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,184 @@
+###############################################################################
+# Flight API — Docker Compose
+# Services: PostgreSQL, Redis, OTel Collector, Tempo, Prometheus, Loki, Grafana
+###############################################################################
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Database
+  # ─────────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: flight_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB:       ${POSTGRES_DB:-flight_api}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migration/01_schema_postgresql.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    networks:
+      - flight_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-flight_api}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Cache
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: flight_redis
+    restart: unless-stopped
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - flight_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Flight API
+  # ─────────────────────────────────────────────────────────────────────────────
+  flight-api:
+    build:
+      context: .
+      dockerfile: src/Services/Flight/Api/Flight.Api/Dockerfile
+    container_name: flight_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Database: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-flight_api};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      ConnectionStrings__Redis:    "redis:6379,password=${REDIS_PASSWORD:-redis123}"
+      Serilog__Otlp__Endpoint:     "http://otel-collector:4317"
+      DistributedTracing__Otlp__Endpoint: "http://otel-collector:4317"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - flight_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Observability — OpenTelemetry Collector
+  # ─────────────────────────────────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    container_name: flight_otel_collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./config/otel/otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"    # OTLP gRPC (receiver)
+      - "4318:4318"    # OTLP HTTP (receiver)
+      - "8888:8888"    # Collector metrics (Prometheus scrape)
+      - "8889:8889"    # Prometheus exporter
+    depends_on:
+      - tempo
+      - loki
+    networks:
+      - flight_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Tracing — Grafana Tempo
+  # ─────────────────────────────────────────────────────────────────────────────
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: flight_tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./config/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"    # HTTP API
+      - "9095:9095"    # gRPC
+    networks:
+      - flight_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Logging — Grafana Loki
+  # ─────────────────────────────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.7
+    container_name: flight_loki
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./config/loki/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - flight_net
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Metrics — Prometheus
+  # ─────────────────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: flight_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - flight_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Visualization — Grafana
+  # ─────────────────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: flight_grafana
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED:   "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE:  "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM:  "true"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - flight_net
+
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  tempo_data:
+  loki_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  flight_net:
+    driver: bridge
