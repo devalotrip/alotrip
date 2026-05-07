@@ -14,7 +14,7 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseNpgsql(
-                "Host=localhost;Port=5432;Database=flightapi_dev;Username=postgres;Password=postgres",
+                "Host=localhost;Port=5432;Database=flight_api;Username=postgres;Password=123456",
                 npgsql => npgsql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
             .Options;
 

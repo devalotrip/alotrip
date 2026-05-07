@@ -134,7 +134,7 @@ public sealed class AgentPartnerConfiguration : IEntityTypeConfiguration<AgentPa
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.PartnerId).HasColumnName("partner_id");
         builder.Property(e => e.IgnoredMode).HasColumnName("ignored_mode");
-        builder.Property(e => e.ListStartPoint).HasColumnName("list_start_point").HasMaxLength(500);
+        builder.Property(e => e.ListStartPoint).HasColumnName("list_start_point");
         builder.Property(e => e.Active).HasColumnName("active");
 
         builder.Property(e => e.CreatedOnUtc).HasColumnName("created_on_utc");
@@ -239,7 +239,7 @@ public sealed class AgentPccConfiguration : IEntityTypeConfiguration<AgentPccEnt
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.Pcc).HasColumnName("pcc").HasMaxLength(10).IsRequired();
         builder.Property(e => e.IgnoredMode).HasColumnName("ignored_mode");
-        builder.Property(e => e.ListStartPoint).HasColumnName("list_start_point").HasMaxLength(500);
+        builder.Property(e => e.ListStartPoint).HasColumnName("list_start_point");
         builder.Property(e => e.Active).HasColumnName("active");
 
         builder.Property(e => e.CreatedOnUtc).HasColumnName("created_on_utc");

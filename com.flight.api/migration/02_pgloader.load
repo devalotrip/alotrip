@@ -1,169 +1,46 @@
--- =============================================================================
--- pgloader migration: SQL Server (SearchAPI) → PostgreSQL (flight_api)
--- Run: pgloader migration/02_pgloader.load
---
--- Prerequisites:
---   1. PostgreSQL must be running with schema from 01_schema_postgresql.sql
---   2. SQL Server must be reachable at WIN-ND900NOFCK6
---   3. pgloader >= 3.6.7 installed
---
--- Notes:
---   • tblCache and tblConfigSystemLog are SKIPPED (replaced by Redis/Loki)
---   • tblUserAccount and tblUserAccountAPI are merged into users
---     (done in 03_transform_data.sql after load into staging tables)
---   • tblBooking contact fields → booking_contacts (done in 03_transform_data.sql)
---   • tblBaggageXxx geo rows are merged into tblGeoXxx counterparts
---     (done in 03_transform_data.sql; here we load them into staging tables)
---   • Float/bit/nvarchar types are cast automatically by pgloader
--- =============================================================================
-
 LOAD DATABASE
-    FROM mssql://sa:U76hqeHk1LMgbU2@WIN-ND900NOFCK6/SearchAPI
-    INTO postgresql://postgres:postgres@localhost:5432/flight_api
+    FROM mssql://sa:U76hqeHk1LMgbU2@host.docker.internal:14330/SearchAPI
+    INTO postgresql://postgres:123456@host.docker.internal:5432/flight_api
 
 WITH
     include drop,
     create tables,
     create indexes,
     reset sequences,
-    workers = 4,
-    concurrency = 2
+    workers = 1,
+    concurrency = 1
 
 CAST
-    -- SQL Server types → PostgreSQL equivalents
-    type bigint            to bigint   drop typemod,
-    type int               to integer  drop typemod,
-    type smallint          to smallint drop typemod,
-    type tinyint           to smallint drop typemod,
-    type float             to double precision,
-    type real              to real,
-    type money             to numeric(18,4),
-    type numeric           to numeric,
-    type bit               to boolean  using (lambda (x) (= 1 (if (stringp x) (parse-integer x) x))),
-    type nvarchar          to text     drop typemod,
-    type varchar           to text     drop typemod,
-    type nchar             to text     drop typemod,
-    type char              to text     drop typemod,
-    type ntext             to text,
-    type text              to text,
-    type datetime          to timestamptz,
-    type datetime2         to timestamptz,
-    type date              to date,
-    type time              to time,
-    type uniqueidentifier  to uuid
+    type bigint   to bigint   drop typemod,
+    type int      to integer  drop typemod,
+    type smallint to smallint drop typemod,
+    type tinyint  to smallint drop typemod,
+    type float    to float8   drop typemod,
+    type real     to real     drop typemod,
+    type money    to numeric  drop typemod,
+    type numeric  to numeric,
+    type bit      to boolean  using (lambda (x) (= 1 (if (stringp x) (parse-integer x) x))),
+    type nvarchar to text     drop typemod,
+    type varchar  to text     drop typemod,
+    type nchar    to text     drop typemod,
+    type char     to text     drop typemod,
+    type ntext    to text,
+    type text     to text,
+    type datetime  to timestamptz,
+    type datetime2 to timestamptz,
+    type date      to date,
+    type time      to time,
+    type uniqueidentifier to uuid
 
--- ─────────────────────────────────────────────────────────────────────────────
--- Tables to INCLUDE (explicit whitelist → everything else is excluded)
--- ─────────────────────────────────────────────────────────────────────────────
-INCLUDING ONLY TABLE NAMES MATCHING
-    -- Lookup / reference
-    'tblAirlineType',
-    'tblAirlines',
-    'tblAircraft',
-    'tblCurrency',
-    'tblPassengerType',
-
-    -- Geo
-    'tblGeoContinent',
-    'tblGeoCountry',
-    'tblGeoCity',
-    'tblGeoAirport',
-
-    -- Baggage geo (will be merged into geo tables in step 03)
-    'tblBaggageContinent',
-    'tblBaggageCountry',
-    'tblBaggageCity',
-    'tblBaggageAirport',
-
-    -- Galileo PCC
-    'tblPcc',
-    'tblClassAndNote',
-
-    -- Users / roles
-    'tblUserRole',
-    'tblUserAccount',
-    'tblUserAccountAPI',
-    'TokenDevice',
-
-    -- Agents
-    'tblAgent',
-    'tblAgentPcc',
-    'tblPartner',
-    'tblAgentPartner',
-    'tblLccInfo',
-    'tblAirlineIgnore',
-    'tblCommission',
-
-    -- Bookings
-    'tblBooking',
-    'tblBookingFlight',
-    'tblBookingSegment',
-    'tblPassenger',
-    'tblTicket',
-    'tblBaggages',
-    'tblInsurance',
-    'tblInvoice',
-    'tblCarRental',
-    'tblTripCancellation',
-    'tblTripTour',
-    'tblTripVisa'
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Table renames: SQL Server name → staging table name in PostgreSQL
--- (staging prefix "stg_" avoids conflicts with final snake_case tables
---  created in 01_schema_postgresql.sql; 03_transform_data.sql will normalize)
--- ─────────────────────────────────────────────────────────────────────────────
-RENAMING TABLES
-    -- Reference tables (direct load, column rename handled below)
-    'tblAirlineType'      TO 'stg_airline_types',
-    'tblAirlines'         TO 'stg_airlines',
-    'tblAircraft'         TO 'stg_aircrafts',
-    'tblCurrency'         TO 'stg_currencies',
-    'tblPassengerType'    TO 'stg_passenger_types',
-
-    -- Geo
-    'tblGeoContinent'     TO 'stg_geo_continents',
-    'tblGeoCountry'       TO 'stg_geo_countries',
-    'tblGeoCity'          TO 'stg_geo_cities',
-    'tblGeoAirport'       TO 'stg_geo_airports',
-
-    -- Baggage geo (staging for merge)
-    'tblBaggageContinent' TO 'stg_baggage_continents',
-    'tblBaggageCountry'   TO 'stg_baggage_countries',
-    'tblBaggageCity'      TO 'stg_baggage_cities',
-    'tblBaggageAirport'   TO 'stg_baggage_airports',
-
-    -- Galileo
-    'tblPcc'              TO 'stg_pccs',
-    'tblClassAndNote'     TO 'stg_class_notes',
-
-    -- Users
-    'tblUserRole'         TO 'stg_user_roles',
-    'tblUserAccount'      TO 'stg_users_website',
-    'tblUserAccountAPI'   TO 'stg_users_api',
-    'TokenDevice'         TO 'stg_token_devices',
-
-    -- Agents
-    'tblAgent'            TO 'stg_agents',
-    'tblAgentPcc'         TO 'stg_agent_pccs',
-    'tblPartner'          TO 'stg_partners',
-    'tblAgentPartner'     TO 'stg_agent_partners',
-    'tblLccInfo'          TO 'stg_lcc_info',
-    'tblAirlineIgnore'    TO 'stg_airline_ignores',
-    'tblCommission'       TO 'stg_commissions',
-
-    -- Bookings
-    'tblBooking'          TO 'stg_bookings',
-    'tblBookingFlight'    TO 'stg_booking_flights',
-    'tblBookingSegment'   TO 'stg_booking_segments',
-    'tblPassenger'        TO 'stg_passengers',
-    'tblTicket'           TO 'stg_tickets',
-    'tblBaggages'         TO 'stg_baggages',
-    'tblInsurance'        TO 'stg_insurances',
-    'tblInvoice'          TO 'stg_invoices',
-    'tblCarRental'        TO 'stg_car_rentals',
-    'tblTripCancellation' TO 'stg_trip_cancellations',
-    'tblTripTour'         TO 'stg_trip_tours',
-    'tblTripVisa'         TO 'stg_trip_visas'
-
-SET work_mem TO '256MB', maintenance_work_mem TO '512MB';
+INCLUDING ONLY TABLE NAMES LIKE
+    'tblAirlineType', 'tblAirlines', 'tblAircraft', 'tblCurrency', 'tblPassengerType',
+    'tblGeoContinent', 'tblGeoCountry', 'tblGeoCity', 'tblGeoAirport',
+    'tblBaggageContinent', 'tblBaggageCountry', 'tblBaggageCity', 'tblBaggageAirport',
+    'tblPcc', 'tblClassAndNote',
+    'tblUserRole', 'tblUserAccount', 'tblUserAccountAPI', 'TokenDevice',
+    'tblAgent', 'tblAgentPcc', 'tblPartner', 'tblAgentPartner',
+    'tblLccInfo', 'tblAirlineIgnore', 'tblCommission',
+    'tblBooking', 'tblBookingFlight', 'tblBookingSegment',
+    'tblPassenger', 'tblTicket', 'tblBaggages', 'tblInsurance', 'tblInvoice',
+    'tblCarRental', 'tblTripCancellation', 'tblTripTour', 'tblTripVisa'
+    IN SCHEMA 'dbo';
