@@ -54,7 +54,7 @@ services:
   flight-api:
     build:
       context: .
-      dockerfile: src/Services/Flight/Api/Flight.Api/Dockerfile
+      dockerfile: Dockerfile
     container_name: flight_api
     restart: unless-stopped
     ports:

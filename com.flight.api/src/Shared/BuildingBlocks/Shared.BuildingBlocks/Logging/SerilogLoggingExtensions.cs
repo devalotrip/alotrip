@@ -18,7 +18,7 @@ public static class SerilogLoggingExtensions
     public static IServiceCollection AddSerilogLogging(
         this IServiceCollection services, IConfiguration cfg)
     {
-        var section = "Logging:Serilog";
+        var section = "Serilog";
 
         var enable = cfg.GetValue($"{section}:Enable", false);
         if (!enable) return services;
@@ -65,6 +65,9 @@ public static class SerilogLoggingExtensions
 
     public static WebApplication UseSerilogReqLogging(this WebApplication app)
     {
+        var enable = app.Configuration.GetValue("Serilog:Enable", false);
+        if (!enable) return app;
+
         app.UseSerilogRequestLogging(options =>
         {
             options.GetLevel = (ctx, _, ex) =>

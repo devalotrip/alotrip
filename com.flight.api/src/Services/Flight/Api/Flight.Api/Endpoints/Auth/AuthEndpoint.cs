@@ -79,7 +79,7 @@ public sealed class AuthEndpoint : ICarterModule
 
     private static async Task<IResult> HandleRevokeAsync(
         ISender sender,
-        RevokeRequest request,
+        [Microsoft.AspNetCore.Mvc.FromBody] RevokeRequest request,
         CancellationToken ct = default)
     {
         var command = new RevokeTokenCommand(request.RefreshToken);

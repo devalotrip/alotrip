@@ -63,7 +63,9 @@ public static class DistributedTracingExtensions
 
     public static WebApplication UseObservability(this WebApplication app)
     {
-        app.MapPrometheusScrapingEndpoint();
+        var enable = app.Configuration.GetValue("DistributedTracing:Enable", false);
+        if (enable)
+            app.MapPrometheusScrapingEndpoint();
         return app;
     }
 }

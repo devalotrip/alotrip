@@ -2,7 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /repo
 
-# Copy Directory.Packages.props first (for CPM cache)
+# Copy Directory.Build.props and Directory.Packages.props first (for CPM cache)
+COPY src/Directory.Build.props src/
 COPY src/Directory.Packages.props src/
 
 # Copy all csproj files to restore in a separate layer (better cache utilisation)
@@ -27,7 +28,6 @@ COPY src/ src/
 
 RUN dotnet publish src/Services/Flight/Api/Flight.Api/Flight.Api.csproj \
     --configuration Release \
-    --no-restore \
     --output /app/publish
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────

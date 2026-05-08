@@ -1,0 +1,64 @@
+## .NET / C#
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+## Build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+.nuget/packages/
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+## Docker
+docker-compose.override.yml
+
+## User secrets & local config
+appsettings.Local.json
+appsettings.local.json
+secrets.json
+
+## Environment files
+.env
+.env.*
+!.env.example
+
+## Publish output
+publish/
+out/
