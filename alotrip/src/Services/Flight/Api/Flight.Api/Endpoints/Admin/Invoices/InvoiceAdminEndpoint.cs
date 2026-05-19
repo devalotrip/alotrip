@@ -13,7 +13,7 @@ public sealed class InvoiceAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/invoices")
             .WithTags("Admin - Invoices")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetInvoices);
         group.MapGet("/{id:int}", GetInvoiceById);

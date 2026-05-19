@@ -13,7 +13,7 @@ public sealed class ClassNoteAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/class-notes")
             .WithTags("Admin - Class And Notes")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetClassAndNotes);
         group.MapGet("/{id:int}", GetClassAndNoteById);

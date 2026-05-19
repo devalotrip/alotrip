@@ -13,7 +13,7 @@ public sealed class TripTourAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/trips/tours")
             .WithTags("Admin - Trip Tours")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetTripTours);
         group.MapGet("/{id:int}", GetTripTourById);

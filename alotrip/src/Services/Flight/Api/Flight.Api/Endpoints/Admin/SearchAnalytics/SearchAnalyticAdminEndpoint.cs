@@ -13,7 +13,7 @@ public sealed class SearchAnalyticAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/search-analytics")
             .WithTags("Admin - Search Analytics")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetSearchAnalytics);
         group.MapGet("/{id:int}", GetSearchAnalyticById);

@@ -13,7 +13,7 @@ public sealed class PccAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/pccs")
             .WithTags("Admin - PCCs")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetPccs);
         group.MapGet("/{pcc}", GetPccById);

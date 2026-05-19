@@ -14,7 +14,7 @@ public sealed class GeoAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/geo")
             .WithTags("Admin Geo")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         // Continents
         group.MapGet("/continents", GetContinents);

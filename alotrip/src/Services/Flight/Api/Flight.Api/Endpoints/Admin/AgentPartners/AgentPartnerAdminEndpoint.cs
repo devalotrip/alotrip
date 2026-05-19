@@ -13,7 +13,7 @@ public sealed class AgentPartnerAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/agent-partners")
             .WithTags("Admin - Agent Partners")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetAgentPartners);
         group.MapPost("/", CreateAgentPartner);

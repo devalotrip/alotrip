@@ -16,7 +16,7 @@ public sealed class PassengerTypeAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/passenger-types")
             .WithTags("Admin - Passenger Types")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetPassengerTypes);
         group.MapGet("/{code}", GetPassengerTypeByCode);

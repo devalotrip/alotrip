@@ -13,7 +13,7 @@ public sealed class AirlineIgnoreAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/airline-ignores")
             .WithTags("Admin - Airline Ignores")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetAirlineIgnores);
         group.MapGet("/{id:int}", GetAirlineIgnoreById);

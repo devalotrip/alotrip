@@ -13,7 +13,7 @@ public sealed class BaggageAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/baggages")
             .WithTags("Admin - Baggages")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetBaggages);
         group.MapGet("/{id}", GetBaggageById);

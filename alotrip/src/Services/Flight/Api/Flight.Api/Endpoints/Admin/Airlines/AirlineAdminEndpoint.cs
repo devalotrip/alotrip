@@ -13,7 +13,7 @@ public sealed class AirlineAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/airlines")
             .WithTags("Admin - Airlines")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetAirlines);
         group.MapGet("/{id}", GetAirlineById);

@@ -13,7 +13,7 @@ public sealed class LccInfoAdminEndpoint : ICarterModule
     {
         var group = app.MapGroup("/api/admin/lcc-infos")
             .WithTags("Admin - LCC Infos")
-            .RequireAuthorization("AdminOnly");
+            //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetLccInfos);
         group.MapGet("/{id:int}", GetLccInfoById);
