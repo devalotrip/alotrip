@@ -11,6 +11,7 @@ public sealed class TripVisaConfiguration : IEntityTypeConfiguration<TripVisaEnt
         builder.ToTable("trip_visas");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.Code).HasColumnName("code").HasMaxLength(50);

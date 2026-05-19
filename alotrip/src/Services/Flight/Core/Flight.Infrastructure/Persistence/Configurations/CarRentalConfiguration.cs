@@ -11,6 +11,7 @@ public sealed class CarRentalConfiguration : IEntityTypeConfiguration<CarRentalE
         builder.ToTable("car_rentals");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.Provider).HasColumnName("provider").HasMaxLength(100);

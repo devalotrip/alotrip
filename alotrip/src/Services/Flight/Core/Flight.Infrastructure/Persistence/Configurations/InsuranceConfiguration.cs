@@ -11,6 +11,7 @@ public sealed class InsuranceConfiguration : IEntityTypeConfiguration<InsuranceE
         builder.ToTable("insurances");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.PassengerId).HasColumnName("passenger_id");

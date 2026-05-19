@@ -11,6 +11,7 @@ public sealed class TripCancellationConfiguration : IEntityTypeConfiguration<Tri
         builder.ToTable("trip_cancellations");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.MarkupAmount).HasColumnName("markup_amount").HasPrecision(18, 4);
@@ -32,6 +33,7 @@ public sealed class AircraftConfiguration : IEntityTypeConfiguration<AircraftEnt
         builder.ToTable("aircrafts");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.IATA).HasColumnName("iata").HasMaxLength(10).IsRequired();
         builder.Property(e => e.Manufacturer).HasColumnName("manufacturer").HasMaxLength(100);
@@ -50,6 +52,7 @@ public sealed class AirlineConfiguration : IEntityTypeConfiguration<AirlineEntit
         builder.ToTable("airlines");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.Code).HasColumnName("code").HasMaxLength(10).IsRequired();
         builder.Property(e => e.Name).HasColumnName("name").HasMaxLength(200);
@@ -70,6 +73,7 @@ public sealed class AirlineTypeConfiguration : IEntityTypeConfiguration<AirlineT
         builder.ToTable("airline_types");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.Code).HasColumnName("code").HasMaxLength(10).IsRequired();
         builder.Property(e => e.Name).HasColumnName("name").HasMaxLength(200);
@@ -90,6 +94,7 @@ public sealed class BaggageConfiguration : IEntityTypeConfiguration<BaggageEntit
         builder.ToTable("baggages");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BaggageCode).HasColumnName("baggage_code").HasMaxLength(50);
         builder.Property(e => e.FlightId).HasColumnName("flight_id");
@@ -114,6 +119,7 @@ public sealed class PartnerConfiguration : IEntityTypeConfiguration<PartnerEntit
         builder.ToTable("partners");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
         builder.Property(e => e.Active).HasColumnName("active");
@@ -130,6 +136,7 @@ public sealed class AgentPartnerConfiguration : IEntityTypeConfiguration<AgentPa
         builder.ToTable("agent_partners");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.PartnerId).HasColumnName("partner_id");
@@ -149,6 +156,7 @@ public sealed class ClassAndNoteConfiguration : IEntityTypeConfiguration<ClassAn
         builder.ToTable("class_and_notes");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AirlineCode).HasColumnName("airline_code").HasMaxLength(10).IsRequired();
         builder.Property(e => e.Class).HasColumnName("class_code").HasMaxLength(10).IsRequired();
@@ -176,6 +184,7 @@ public sealed class UserRoleConfiguration : IEntityTypeConfiguration<UserRoleEnt
         builder.ToTable("user_roles");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
         builder.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
@@ -192,6 +201,7 @@ public sealed class SearchAnalyticConfiguration : IEntityTypeConfiguration<Searc
         builder.ToTable("search_analytics");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AgentCode).HasColumnName("agent_code").HasMaxLength(50);
         builder.Property(e => e.Time).HasColumnName("time");
@@ -216,6 +226,7 @@ public sealed class AirlineIgnoreConfiguration : IEntityTypeConfiguration<Airlin
         builder.ToTable("airline_ignores");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.Airline).HasColumnName("airline").HasMaxLength(10).IsRequired();
@@ -235,6 +246,7 @@ public sealed class AgentPccConfiguration : IEntityTypeConfiguration<AgentPccEnt
         builder.ToTable("agent_pccs");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.Pcc).HasColumnName("pcc").HasMaxLength(10).IsRequired();
@@ -254,6 +266,7 @@ public sealed class PccConfiguration : IEntityTypeConfiguration<PccEntity>
         builder.ToTable("pccs");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.Active).HasColumnName("active");
 
@@ -269,6 +282,7 @@ public sealed class LccInfoConfiguration : IEntityTypeConfiguration<LccInfoEntit
         builder.ToTable("lcc_infos");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.AgentId).HasColumnName("agent_id");
         builder.Property(e => e.Airline).HasColumnName("airline").HasMaxLength(10).IsRequired();

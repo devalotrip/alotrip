@@ -101,8 +101,8 @@ public sealed class AgentConfigRepository(ApplicationDbContext db) : IAgentConfi
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = $"""
-                SELECT airline_code, filter_by_plating, filter_by_any_segment, filter_by_all_segments
-                FROM   agent_airline_ignores
+                SELECT airline, filter_by_plating_carrier, filter_by_any_segment, filter_by_all_segment
+                FROM   airline_ignores
                 WHERE  agent_id = {agentId}
                 """;
 

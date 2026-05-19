@@ -11,6 +11,7 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<InvoiceEntit
         builder.ToTable("invoices");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.CompanyName).HasColumnName("company_name").HasMaxLength(150);

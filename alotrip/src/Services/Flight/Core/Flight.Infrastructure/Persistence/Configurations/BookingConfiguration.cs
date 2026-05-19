@@ -118,7 +118,7 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<TicketEntity>
         builder.ToTable("tickets");
         builder.HasKey(t => t.Id);
 
-        builder.Property(t => t.Id).HasColumnName("id");
+        builder.Property(t => t.Id).HasColumnName("id").ValueGeneratedOnAdd();
         builder.Property(t => t.BookingId).HasColumnName("booking_id");
         builder.Property(t => t.PassengerId).HasColumnName("passenger_id");
         builder.Property(t => t.TicketNumber).HasColumnName("ticket_number").HasMaxLength(30).IsRequired();
@@ -131,5 +131,11 @@ public sealed class TicketConfiguration : IEntityTypeConfiguration<TicketEntity>
 
         builder.HasIndex(t => t.TicketNumber).IsUnique();
         builder.HasIndex(t => t.BookingId);
+
+        // Explicit relationship to prevent shadow property BookingId1
+        builder.HasOne(t => t.Booking)
+               .WithMany(b => b.Tickets)
+               .HasForeignKey(t => t.BookingId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

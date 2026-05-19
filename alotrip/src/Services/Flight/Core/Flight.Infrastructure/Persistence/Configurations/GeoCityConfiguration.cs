@@ -11,6 +11,7 @@ public sealed class GeoCityConfiguration : IEntityTypeConfiguration<GeoCity>
         builder.ToTable("geo_cities");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.CountryCode).HasColumnName("country_code").HasMaxLength(10);
         builder.Property(e => e.NameVi).HasColumnName("name_vi").HasMaxLength(150);

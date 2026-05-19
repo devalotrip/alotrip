@@ -11,6 +11,7 @@ public sealed class TripTourConfiguration : IEntityTypeConfiguration<TripTourEnt
         builder.ToTable("trip_tours");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.BookingId).HasColumnName("booking_id");
         builder.Property(e => e.TourName).HasColumnName("tour_name").HasMaxLength(200);

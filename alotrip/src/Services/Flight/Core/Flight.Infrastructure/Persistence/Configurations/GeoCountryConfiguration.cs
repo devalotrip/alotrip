@@ -11,6 +11,7 @@ public sealed class GeoCountryConfiguration : IEntityTypeConfiguration<GeoCountr
         builder.ToTable("geo_countries");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.ContinentCode).HasColumnName("continent_code").HasMaxLength(10);
         builder.Property(e => e.NameVi).HasColumnName("name_vi").HasMaxLength(150);

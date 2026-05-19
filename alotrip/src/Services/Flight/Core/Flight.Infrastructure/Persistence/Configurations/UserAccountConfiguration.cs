@@ -11,6 +11,7 @@ public sealed class UserAccountConfiguration : IEntityTypeConfiguration<UserAcco
         builder.ToTable("user_accounts");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.UserRoleId).HasColumnName("user_role_id");
         builder.Property(e => e.Email).HasColumnName("email").HasMaxLength(150).IsRequired();

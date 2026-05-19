@@ -3,6 +3,7 @@ using System;
 using Flight.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Flight.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519060614_FixIdColumnNaming")]
+    partial class FixIdColumnNaming
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1632,6 +1635,9 @@ namespace Flight.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("booking_id");
 
+                    b.Property<Guid?>("BookingId1")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
@@ -1676,6 +1682,8 @@ namespace Flight.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
+
+                    b.HasIndex("BookingId1");
 
                     b.HasIndex("TicketNumber")
                         .IsUnique();
@@ -2467,11 +2475,15 @@ namespace Flight.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Flight.Domain.Aggregates.Booking.TicketEntity", b =>
                 {
-                    b.HasOne("Flight.Domain.Aggregates.Booking.BookingEntity", "Booking")
+                    b.HasOne("Flight.Domain.Aggregates.Booking.BookingEntity", null)
                         .WithMany("Tickets")
                         .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Flight.Domain.Aggregates.Booking.BookingEntity", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId1");
 
                     b.Navigation("Booking");
                 });

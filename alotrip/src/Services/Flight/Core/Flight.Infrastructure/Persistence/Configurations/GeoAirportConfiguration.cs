@@ -11,6 +11,7 @@ public sealed class GeoAirportConfiguration : IEntityTypeConfiguration<GeoAirpor
         builder.ToTable("geo_airports");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
 
         builder.Property(e => e.CityCode).HasColumnName("city_code").HasMaxLength(10);
         builder.Property(e => e.NameVi).HasColumnName("name_vi").HasMaxLength(150);
