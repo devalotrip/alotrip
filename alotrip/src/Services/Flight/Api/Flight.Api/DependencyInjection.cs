@@ -131,16 +131,13 @@ public static class DependencyInjection
         // Rate limiter
         app.UseRateLimiter();
 
-        // Swagger (dev only)
-        if (app.Environment.IsDevelopment())
+        // Swagger (always on for testing; disable in production via app settings if needed)
+        app.UseSwagger();
+        app.UseSwaggerUI(o =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(o =>
-            {
-                o.SwaggerEndpoint("/swagger/v1/swagger.json", "Flight API v1");
-                o.RoutePrefix = "swagger";
-            });
-        }
+            o.SwaggerEndpoint("/swagger/v1/swagger.json", "Flight API v1");
+            o.RoutePrefix = "swagger";
+        });
 
         // Auth middleware (order matters: Authentication → Authorization)
         app.UseAuthentication();
