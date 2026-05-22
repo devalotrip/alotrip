@@ -12,10 +12,10 @@ public sealed class SearchAnalyticAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/search-analytics")
-            .WithTags("Admin - Search Analytics")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Search Analytics");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetSearchAnalytics);
+		group.MapGet("/", GetSearchAnalytics);
         group.MapGet("/{id:int}", GetSearchAnalyticById);
         group.MapPost("/", CreateSearchAnalytic);
     }

@@ -12,10 +12,10 @@ public sealed class CarRentalAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/car-rentals")
-            .WithTags("Admin - Car Rentals")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Car Rentals");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetCarRentals);
+		group.MapGet("/", GetCarRentals);
         group.MapGet("/{id:int}", GetCarRentalById);
         group.MapPost("/", CreateCarRental);
         group.MapDelete("/{id:int}", DeleteCarRental);

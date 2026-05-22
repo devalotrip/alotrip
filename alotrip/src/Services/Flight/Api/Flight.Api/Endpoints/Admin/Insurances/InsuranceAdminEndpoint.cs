@@ -12,10 +12,10 @@ public sealed class InsuranceAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/insurances")
-            .WithTags("Admin - Insurances")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Insurances");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetInsurances);
+		group.MapGet("/", GetInsurances);
         group.MapGet("/{id:int}", GetInsuranceById);
         group.MapPost("/", CreateInsurance);
         group.MapDelete("/{id:int}", DeleteInsurance);

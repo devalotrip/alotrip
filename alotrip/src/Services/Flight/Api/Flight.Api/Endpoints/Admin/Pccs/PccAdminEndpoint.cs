@@ -12,10 +12,10 @@ public sealed class PccAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/pccs")
-            .WithTags("Admin - PCCs")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - PCCs");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetPccs);
+		group.MapGet("/", GetPccs);
         group.MapGet("/{pcc}", GetPccById);
         group.MapPost("/", CreatePcc);
         group.MapDelete("/{pcc}", DeletePcc);

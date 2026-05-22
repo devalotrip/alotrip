@@ -13,11 +13,11 @@ public sealed class GeoAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/geo")
-            .WithTags("Admin Geo")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin Geo");
+		//.RequireAuthorization("AdminOnly");
 
-        // Continents
-        group.MapGet("/continents", GetContinents);
+		// Continents
+		group.MapGet("/continents", GetContinents);
         group.MapGet("/continents/{code}", GetContinentByCode);
         group.MapPost("/continents", CreateContinent);
         group.MapPut("/continents/{code}", UpdateContinent);

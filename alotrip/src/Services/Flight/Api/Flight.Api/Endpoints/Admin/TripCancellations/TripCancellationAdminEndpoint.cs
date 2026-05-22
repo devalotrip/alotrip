@@ -12,10 +12,10 @@ public sealed class TripCancellationAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/trips/cancellations")
-            .WithTags("Admin - Trip Cancellations")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Trip Cancellations");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetTripCancellations);
+		group.MapGet("/", GetTripCancellations);
         group.MapGet("/{id:int}", GetTripCancellationById);
         group.MapPost("/", CreateTripCancellation);
         group.MapDelete("/{id:int}", DeleteTripCancellation);

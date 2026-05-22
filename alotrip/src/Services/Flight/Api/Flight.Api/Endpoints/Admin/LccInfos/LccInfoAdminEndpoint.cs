@@ -12,10 +12,10 @@ public sealed class LccInfoAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/lcc-infos")
-            .WithTags("Admin - LCC Infos")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - LCC Infos");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetLccInfos);
+		group.MapGet("/", GetLccInfos);
         group.MapGet("/{id:int}", GetLccInfoById);
         group.MapPost("/", CreateLccInfo);
         group.MapPut("/{id:int}", UpdateLccInfo);

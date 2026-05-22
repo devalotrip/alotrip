@@ -12,10 +12,10 @@ public sealed class InvoiceAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/invoices")
-            .WithTags("Admin - Invoices")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Invoices");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetInvoices);
+		group.MapGet("/", GetInvoices);
         group.MapGet("/{id:int}", GetInvoiceById);
         group.MapPost("/", CreateInvoice);
         group.MapPut("/{id:int}", UpdateInvoice);

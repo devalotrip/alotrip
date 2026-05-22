@@ -12,10 +12,10 @@ public sealed class BaggageAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/baggages")
-            .WithTags("Admin - Baggages")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Baggages");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetBaggages);
+		group.MapGet("/", GetBaggages);
         group.MapGet("/{id}", GetBaggageById);
         group.MapPost("/", CreateBaggage);
         group.MapDelete("/{id}", DeleteBaggage);

@@ -12,10 +12,10 @@ public sealed class AirlineIgnoreAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/airline-ignores")
-            .WithTags("Admin - Airline Ignores")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Airline Ignores");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetAirlineIgnores);
+		group.MapGet("/", GetAirlineIgnores);
         group.MapGet("/{id:int}", GetAirlineIgnoreById);
         group.MapPost("/", CreateAirlineIgnore);
         group.MapPut("/{id:int}", UpdateAirlineIgnore);

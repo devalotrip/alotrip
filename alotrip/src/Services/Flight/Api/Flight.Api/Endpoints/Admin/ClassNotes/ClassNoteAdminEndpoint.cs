@@ -12,10 +12,10 @@ public sealed class ClassNoteAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/class-notes")
-            .WithTags("Admin - Class And Notes")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Class And Notes");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetClassAndNotes);
+		group.MapGet("/", GetClassAndNotes);
         group.MapGet("/{id:int}", GetClassAndNoteById);
         group.MapPost("/", CreateClassAndNote);
         group.MapDelete("/{id:int}", DeleteClassAndNote);

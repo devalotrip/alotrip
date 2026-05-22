@@ -15,10 +15,10 @@ public sealed class PassengerTypeAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/passenger-types")
-            .WithTags("Admin - Passenger Types")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Passenger Types");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetPassengerTypes);
+		group.MapGet("/", GetPassengerTypes);
         group.MapGet("/{code}", GetPassengerTypeByCode);
         group.MapPost("/", CreatePassengerType);
         group.MapPut("/{code}", UpdatePassengerType);

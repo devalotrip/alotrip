@@ -12,10 +12,10 @@ public sealed class AirlineTypeAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/airline-types")
-            .WithTags("Admin - Airline Types")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Airline Types");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetAirlineTypes);
+		group.MapGet("/", GetAirlineTypes);
         group.MapGet("/{id}", GetAirlineTypeById);
         group.MapPost("/", CreateAirlineType);
         group.MapPut("/{id}", UpdateAirlineType);

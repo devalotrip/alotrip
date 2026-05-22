@@ -12,7 +12,7 @@ public sealed class AgentPartnerAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/agent-partners")
-            .WithTags("Admin - Agent Partners")
+            .WithTags("Admin - Agent Partners");
             //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetAgentPartners);

@@ -12,10 +12,10 @@ public sealed class UserRoleAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/user-roles")
-            .WithTags("Admin - User Roles")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - User Roles");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetUserRoles);
+		group.MapGet("/", GetUserRoles);
         group.MapGet("/{id:int}", GetUserRoleById);
         group.MapPost("/", CreateUserRole);
         group.MapDelete("/{id:int}", DeleteUserRole);

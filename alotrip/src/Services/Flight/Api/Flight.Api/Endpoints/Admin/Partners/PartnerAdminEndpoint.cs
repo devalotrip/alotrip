@@ -12,10 +12,10 @@ public sealed class PartnerAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/partners")
-            .WithTags("Admin - Partners")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Partners");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetPartners);
+		group.MapGet("/", GetPartners);
         group.MapGet("/{id:int}", GetPartnerById);
         group.MapPost("/", CreatePartner);
         group.MapPut("/{id:int}", UpdatePartner);

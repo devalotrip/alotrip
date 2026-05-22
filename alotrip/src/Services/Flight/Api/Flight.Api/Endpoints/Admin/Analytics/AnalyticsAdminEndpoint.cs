@@ -12,10 +12,10 @@ public sealed class AnalyticsAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/analytics")
-            .WithTags("Admin Analytics")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin Analytics");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/bookings-summary", GetBookingsSummary);
+		group.MapGet("/bookings-summary", GetBookingsSummary);
         group.MapGet("/tickets-issued", GetTicketsIssued);
         group.MapGet("/search-details", GetSearchDetails);
     }

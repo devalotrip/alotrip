@@ -12,7 +12,7 @@ public sealed class AgentPccAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/agent-pccs")
-            .WithTags("Admin - Agent PCCs")
+            .WithTags("Admin - Agent PCCs");
             //.RequireAuthorization("AdminOnly");
 
         group.MapGet("/", GetAgentPccs);

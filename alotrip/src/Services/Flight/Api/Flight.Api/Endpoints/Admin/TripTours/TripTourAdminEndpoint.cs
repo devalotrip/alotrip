@@ -12,10 +12,10 @@ public sealed class TripTourAdminEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/trips/tours")
-            .WithTags("Admin - Trip Tours")
-            //.RequireAuthorization("AdminOnly");
+            .WithTags("Admin - Trip Tours");
+		//.RequireAuthorization("AdminOnly");
 
-        group.MapGet("/", GetTripTours);
+		group.MapGet("/", GetTripTours);
         group.MapGet("/{id:int}", GetTripTourById);
         group.MapPost("/", CreateTripTour);
         group.MapPut("/{id:int}", UpdateTripTour);
