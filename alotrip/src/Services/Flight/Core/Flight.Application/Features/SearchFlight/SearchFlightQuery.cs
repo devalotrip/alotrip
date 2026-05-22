@@ -6,6 +6,7 @@ using Flight.Domain.Enums;
 using Flight.Domain.Repositories;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shared.BuildingBlocks.CQRS;
 
@@ -51,11 +52,13 @@ public sealed class SearchFlightQueryValidator : AbstractValidator<SearchFlightQ
 // ── Handler ──────────────────────────────────────────────────────────────────
 public sealed class SearchFlightQueryHandler(
     IEnumerable<IFlightEngine> engines,
-    IFlightCacheService        cache,
+    IFlightCacheService        _,       // Reserved for future cache re-enable
     ISender                    sender,
     IAgentConfigRepository     agentConfigRepository,
-    ISearchAnalyticRepository   searchAnalyticRepository,
+    IAgentRepository           agentRepository,
+    ISearchAnalyticRepository  searchAnalyticRepository,
     IGeoAirportRepository      geoAirportRepository,
+    IConfiguration             configuration,
     ILogger<SearchFlightQueryHandler> logger)
     : IQueryHandler<SearchFlightQuery, IEnumerable<FareDataDto>>
 {
@@ -65,194 +68,217 @@ public sealed class SearchFlightQueryHandler(
         // 1. Build cache key
         var cacheKey = BuildCacheKey(query);
 
-        // 2. Check Redis cache trước
-        var cached = await cache.GetSearchResultAsync(cacheKey, ct);
-        if (cached != null)
-        {
-            logger.LogInformation("Cache HIT for route {Origin}→{Destination} on {Date}",
-                query.Origin, query.Destination, query.DepartDate.ToString("yyyy-MM-dd"));
-
-            // Track analytics even on cache hits (every search counts)
-            await TrackSearchAnalyticAsync(query, null, "CACHE", ct);
-            return cached;
-        }
-
-        // 3. Load agent config (controls which engines are allowed)
+        // 2. Load agent config
         AgentConfigDto? agentConfig = null;
         if (!string.IsNullOrWhiteSpace(query.AgentCode))
             agentConfig = await agentConfigRepository.GetByCodeAsync(query.AgentCode, ct);
 
-        // 4. Fan-out song song đến các engines đã được agent cho phép
-        var activeEngines = engines
-            .Where(e => e.IsEnabled
-                && IsEngineAllowed(e, agentConfig)
-                && IsRouteAllowedForEngine(e, agentConfig, query.Origin, query.Destination))
-            .ToList();
+        // 3. Get country codes for route check
+        var countryCodes = await geoAirportRepository.GetCountryCodesAsync(
+            new[] { query.Origin, query.Destination }, ct);
+        var originCountry = countryCodes.GetValueOrDefault(query.Origin, "").ToUpperInvariant();
+        var destCountry = countryCodes.GetValueOrDefault(query.Destination, "").ToUpperInvariant();
+        bool isInternational = originCountry != "VN" || destCountry != "VN";
 
-        logger.LogInformation("Searching {EngineCount} engines for {Origin}→{Destination}",
-            activeEngines.Count, query.Origin, query.Destination);
+        // 4. Get minimum depart time from config (default 0 hours)
+        int minimumDepartHours = int.Parse(configuration["MinimumDepartTime"] ?? "0");
 
-        var request = new SearchFlightRequest
+        // 5. Fan-out song song đến các engines
+        var allFares = new List<FareDataDto>();
+
+        // ── Galileo: chỉ search quốc tế + loop theo từng PCC của agent ────────
+        if (isInternational && agentConfig?.GalileoActive == true)
         {
-            Origin      = query.Origin,
-            Destination = query.Destination,
-            DepartDate  = query.DepartDate,
-            ReturnDate  = query.ReturnDate,
-            AdultCount  = query.AdultCount,
-            ChildCount  = query.ChildCount,
-            InfantCount = query.InfantCount,
-            Currency    = query.Currency,
-            AgentCode   = query.AgentCode
-        };
+            var galileoEngine = engines.FirstOrDefault(e => e.Source == FlightSource.Galileo);
+            if (galileoEngine is not null)
+            {
+                var galileoFares = await SearchGalileoWithPccLoopAsync(
+                    galileoEngine, query, agentConfig, minimumDepartHours, ct);
+                allFares.AddRange(galileoFares);
+            }
+        }
 
-        var tasks = activeEngines.Select(e => SafeSearchAsync(e, request, ct));
-        var results = await Task.WhenAll(tasks);
+        // ── Partner engines: Kiwi, Pkfare, Maybay, Datacom ────────────────────
+        var partnerEngines = engines.Where(e => e.Source != FlightSource.Galileo).ToList();
+        var partnerTasks = new List<Task<IEnumerable<FareDataDto>>>();
 
-        var fares = results
-            .SelectMany(r => r)
-            .OrderBy(f => f.TotalFare)
-            .ToList();
+        foreach (var engine in partnerEngines)
+        {
+            if (!engine.IsEnabled) continue;
+            if (!IsEngineAllowed(engine, agentConfig)) continue;
+            if (!IsRouteAllowedForEngine(engine, agentConfig, query.Origin, query.Destination, originCountry, destCountry)) continue;
+
+            partnerTasks.Add(SafeSearchAsync(engine, query, minimumDepartHours, ct));
+        }
+
+        var partnerResults = await Task.WhenAll(partnerTasks);
+        foreach (var result in partnerResults)
+            allFares.AddRange(result);
 
         logger.LogInformation("Found {FareCount} raw fares for {Origin}→{Destination}",
-            fares.Count, query.Origin, query.Destination);
+            allFares.Count, query.Origin, query.Destination);
 
-        // 5. Apply airline ignore filters
+        // 6. Apply airline ignore filters
         if (agentConfig?.AirlineIgnores.Count > 0)
-            fares = ApplyAirlineIgnores(fares, agentConfig.AirlineIgnores);
+            allFares = ApplyAirlineIgnores(allFares, agentConfig.AirlineIgnores);
 
-        // 6. Apply agent commission / service fee
-        if (fares.Count > 0 && !string.IsNullOrWhiteSpace(query.AgentCode))
+        // 7. Apply agent commission / service fee
+        if (allFares.Count > 0 && !string.IsNullOrWhiteSpace(query.AgentCode))
         {
-            var applied = await sender.Send(new ApplyCommissionCommand(fares, query.AgentCode), ct);
-            fares = applied.ToList();
+            var applied = await sender.Send(new ApplyCommissionCommand(allFares, query.AgentCode), ct);
+            allFares = applied.ToList();
         }
 
-        // Re-sort after commission adjustment changes TotalFare
-        fares.Sort((a, b) => a.TotalFare.CompareTo(b.TotalFare));
+        // Re-sort after commission adjustment
+        allFares.Sort((a, b) => a.TotalFare.CompareTo(b.TotalFare));
 
-        // 7. Lưu vào cache 15 phút
-        if (fares.Count > 0)
-        {
-            await cache.SetSearchResultAsync(cacheKey, fares, TimeSpan.FromMinutes(15), ct);
-
-            // 7b. Save min fare for calendar (passive cache, matches old SaveForCache)
-            await SaveMinFareForCalendarAsync(fares, ct);
-        }
-
-        // 8. Track search analytics (fire-inline, best-effort)
-        var sourcesStr = string.Join(",", activeEngines.Select(e => e.Source.ToString()));
+        // 8. Track search analytics
+        var sourcesStr = string.Join(",", allFares.Select(f => f.Source.ToString()).Distinct());
         await TrackSearchAnalyticAsync(query, agentConfig, sourcesStr, ct);
 
-        return fares;
+        return allFares;
     }
 
-    // ── Min fare calendar population ─────────────────────────────────────────
+    // ── Galileo PCC loop (matches old Interface.cs logic) ─────────────────────
 
     /// <summary>
-    /// After every search, saves the cheapest fare as a min-fare calendar entry.
-    /// Matches old SaveForCache() from Interface.cs — passive cache populated by real searches.
-    /// Only saves if the new price is cheaper than the existing cached entry (or entry is missing).
+    /// Search Galileo with PCC loop — matches old Interface.cs Travelport section.
+    /// Each allowed PCC runs as a separate task, results are merged.
     /// </summary>
-    private async Task SaveMinFareForCalendarAsync(List<FareDataDto> fares, CancellationToken ct)
+    private async Task<List<FareDataDto>> SearchGalileoWithPccLoopAsync(
+        IFlightEngine galileoEngine,
+        SearchFlightQuery query,
+        AgentConfigDto agentConfig,
+        int minimumDepartHours,
+        CancellationToken ct)
     {
-        try
+        if (agentConfig.AgentId == 0) return [];
+
+        // Get active PCCs for this agent
+        var activePccs = await agentRepository.GetActivePccsByAgentIdAsync(agentConfig.AgentId, ct);
+        var allowedPccs = new List<AgentPccEntity>();
+
+        foreach (var pcc in activePccs)
         {
-            var cheapest = fares[0]; // already sorted by TotalFare ascending
+            var arrRoute = (pcc.ListStartPoint ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-            // Check if an existing entry is already cheaper (avoid overwriting better data)
-            var existing = await cache.GetMinFareEntryAsync(
-                cheapest.Origin, cheapest.Destination, cheapest.DepartDate, ct);
-            if (existing is not null && existing.MinPrice <= cheapest.AdultFare)
-                return;
-
-            var entry = new MinFareEntryDto
+            if (pcc.IgnoredMode == 0)
             {
-                Origin        = cheapest.Origin,
-                Destination   = cheapest.Destination,
-                DepartDate    = cheapest.DepartDate,
-                Airline       = cheapest.Airline,
-                MinPrice      = cheapest.AdultFare,
-                ServiceFee    = cheapest.ServiceFee,
-                Currency      = cheapest.Currency,
-                ItineraryType = cheapest.TripType == TripType.RoundTrip ? 2 : 1,
-                ReturnDate    = cheapest.ReturnDate,
-                SearchedAt    = DateTime.UtcNow,
+                // Blacklist: search all EXCEPT these routes
+                if (arrRoute.Length == 0 || !IsRouteInList(arrRoute, query.Origin, query.Destination, query.Origin, query.Destination))
+                    allowedPccs.Add(pcc);
+            }
+            else if (pcc.IgnoredMode == 1)
+            {
+                // Whitelist: search ONLY these routes
+                if (IsRouteInList(arrRoute, query.Origin, query.Destination, query.Origin, query.Destination))
+                    allowedPccs.Add(pcc);
+            }
+            else
+            {
+                // No restriction
+                allowedPccs.Add(pcc);
+            }
+        }
+
+        if (allowedPccs.Count == 0) return [];
+
+        // Fan-out: each PCC runs as separate task (matches old Task.Factory.StartNew)
+        var tasks = allowedPccs.Select(pcc => SafeSearchGalileoAsync(galileoEngine, query, pcc.Pcc, minimumDepartHours, ct));
+        var results = await Task.WhenAll(tasks);
+
+        return results.SelectMany(r => r).ToList();
+    }
+
+    /// <summary>
+    /// Checks if the route matches any pattern in the list.
+    /// Matches old Interface.cs CheckSearchFlight 5-pattern logic:
+    ///   startPoint, startPoint+endPoint, startCountry+endCountry, startCountry+endPoint, startPoint+endCountry
+    /// </summary>
+    private static bool IsRouteInList(string[] routeList, string origin, string destination, string originCountry, string destCountry)
+    {
+        return routeList.Any(r =>
+            r.Trim().Equals(origin, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(origin + destination, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(originCountry + destCountry, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(originCountry + destination, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(origin + destCountry, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<IEnumerable<FareDataDto>> SafeSearchGalileoAsync(
+        IFlightEngine engine, SearchFlightQuery query, string pccCode, int minimumDepartHours, CancellationToken ct)
+    {
+        try
+        {
+            var request = new SearchFlightRequest
+            {
+                Origin      = query.Origin,
+                Destination = query.Destination,
+                DepartDate  = query.DepartDate,
+                ReturnDate  = query.ReturnDate,
+                TripType    = query.ReturnDate.HasValue ? TripType.RoundTrip : TripType.OneWay,
+                AdultCount  = query.AdultCount,
+                ChildCount  = query.ChildCount,
+                InfantCount = query.InfantCount,
+                Currency    = query.Currency,
+                AgentCode   = query.AgentCode,
+                PccCode     = pccCode
             };
-            await cache.SetMinFareEntryAsync(entry, ct);
+
+            var fares = await engine.SearchFlightAsync(request, ct);
+
+            // Apply minimum depart time filter (matches old code)
+            return fares.Where(f =>
+                f.OutboundOptions.All(o => o.Segments.All(s => (s.DepartTime - DateTime.Now).TotalHours >= minimumDepartHours)) &&
+                f.ReturnOptions.All(o => o.Segments.All(s => (s.DepartTime - DateTime.Now).TotalHours >= minimumDepartHours))
+            );
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to save min fare for calendar");
+            logger.LogWarning(ex, "Galileo PCC {Pcc} failed during search. Skipping.", pccCode);
+            return [];
         }
     }
 
-    // ── Search analytics tracking ─────────────────────────────────────────────
+    // ── Partner engine search ─────────────────────────────────────────────────
 
-    /// <summary>
-    /// Persists a search analytic record. Matches old IncrementingSearch() from SearchAnalyticDB.
-    /// Also records which engines were queried (Sources) — maps to old tblSearchDetail.System concept.
-    /// Best-effort: failures are logged but never block the search response.
-    /// </summary>
-    private async Task TrackSearchAnalyticAsync(
-        SearchFlightQuery query, AgentConfigDto? agentConfig, string sources, CancellationToken ct)
+    private async Task<IEnumerable<FareDataDto>> SafeSearchAsync(
+        IFlightEngine engine, SearchFlightQuery query, int minimumDepartHours, CancellationToken ct)
     {
         try
         {
-            // Itinerary: 1 = one-way, 2 = round-trip (matches old enum)
-            var itinerary = query.ReturnDate.HasValue ? 2 : 1;
+            var request = new SearchFlightRequest
+            {
+                Origin      = query.Origin,
+                Destination = query.Destination,
+                DepartDate  = query.DepartDate,
+                ReturnDate  = query.ReturnDate,
+                TripType    = query.ReturnDate.HasValue ? TripType.RoundTrip : TripType.OneWay,
+                AdultCount  = query.AdultCount,
+                ChildCount  = query.ChildCount,
+                InfantCount = query.InfantCount,
+                Currency    = query.Currency,
+                AgentCode   = query.AgentCode
+            };
 
-            // FlightType: true = Domestic (within Vietnam), false = International
-            var flightType = await IsDomesticFlightAsync(query.Origin, query.Destination, ct);
+            var fares = await engine.SearchFlightAsync(request, ct);
 
-            var entity = SearchAnalyticEntity.Create(
-                agentCode: query.AgentCode,
-                startPoint: query.Origin,
-                endPoint: query.Destination,
-                itinerary: itinerary,
-                departDate: query.DepartDate,
-                returnDate: query.ReturnDate,
-                flightType: flightType,
-                ipAddress: query.IpAddress,
-                sources: sources);
-
-            await searchAnalyticRepository.AddSearchAnalyticAsync(entity, ct);
+            // Apply minimum depart time filter
+            return fares.Where(f =>
+                f.OutboundOptions.All(o => o.Segments.All(s => (s.DepartTime - DateTime.Now).TotalHours >= minimumDepartHours)) &&
+                f.ReturnOptions.All(o => o.Segments.All(s => (s.DepartTime - DateTime.Now).TotalHours >= minimumDepartHours))
+            );
         }
         catch (Exception ex)
         {
-            // Never fail the search response because of analytics
-            logger.LogWarning(ex, "Failed to track search analytics for {Origin}→{Destination}",
-                query.Origin, query.Destination);
-        }
-    }
-
-    /// <summary>
-    /// Checks whether both airports belong to the same country ("VN").
-    /// Falls back to false (international) if geo data is unavailable.
-    /// </summary>
-    private async Task<bool> IsDomesticFlightAsync(
-        string origin, string destination, CancellationToken ct)
-    {
-        try
-        {
-            var countryCodes = await geoAirportRepository.GetCountryCodesAsync(
-                new[] { origin, destination }, ct);
-
-            return countryCodes.TryGetValue(origin, out var originCountry)
-                && countryCodes.TryGetValue(destination, out var destCountry)
-                && string.Equals(originCountry, destCountry, StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false; // default to international if geo lookup fails
+            logger.LogWarning(ex, "Engine {Source} failed during search. Skipping.", engine.Source);
+            return [];
         }
     }
 
     // ── Engine allow / deny ───────────────────────────────────────────────────
 
-    /// <summary>
-    /// Returns true if the engine is permitted for this agent.
-    /// Anonymous agents (no config) may use all engines.
-    /// </summary>
     private static bool IsEngineAllowed(IFlightEngine engine, AgentConfigDto? config)
     {
         if (config is null) return true;
@@ -270,17 +296,24 @@ public sealed class SearchFlightQueryHandler(
 
     /// <summary>
     /// Checks partner route eligibility based on IgnoredMode + ListStartPoint.
-    /// Matches old Interface.cs CheckSearchFlight logic.
+    /// Matches old Interface.cs CheckSearchFlight logic with 5-pattern matching.
     ///
     /// IgnoredMode=0: "all routes EXCEPT these" (blacklist)
     /// IgnoredMode=1: "ONLY these routes" (whitelist)
-    /// Route format: "{origin}{destination}" (e.g. "SGNHAN")
+    ///
+    /// 5 patterns checked (from old code):
+    ///   1. startPoint                           (e.g. "SGN")
+    ///   2. startPoint + endPoint                (e.g. "SGNHAN")
+    ///   3. startCountry + endCountry            (e.g. "VNJP")
+    ///   4. startCountry + endPoint              (e.g. "VNHAN")
+    ///   5. startPoint + endCountry              (e.g. "SGNJP")
     ///
     /// Priority: whitelist first → blacklist → default allow.
     /// Conflicts: routes in both lists are removed from whitelist.
     /// </summary>
     private static bool IsRouteAllowedForEngine(
-        IFlightEngine engine, AgentConfigDto? config, string origin, string destination)
+        IFlightEngine engine, AgentConfigDto? config,
+        string origin, string destination, string originCountry, string destCountry)
     {
         if (config is null || config.PartnerRouteRules.Count == 0) return true;
 
@@ -291,7 +324,7 @@ public sealed class SearchFlightQueryHandler(
             FlightSource.Pkfare  => "pkfare",
             FlightSource.Maybay  => "maybay",
             FlightSource.Datacom => "datacom",
-            _                    => null, // Galileo has no partner route rules
+            _                    => null,
         };
 
         if (partnerName is null) return true;
@@ -303,9 +336,8 @@ public sealed class SearchFlightQueryHandler(
 
         if (rules.Count == 0) return true;
 
-        var route = $"{origin}{destination}";
-        var blacklist = new List<string>(); // IgnoredMode=0: all except these
-        var whitelist = new List<string>(); // IgnoredMode=1: only these
+        var blacklist = new List<string>();
+        var whitelist = new List<string>();
 
         foreach (var rule in rules)
         {
@@ -315,16 +347,24 @@ public sealed class SearchFlightQueryHandler(
                 whitelist.AddRange(rule.Routes);
         }
 
-        // Remove conflicts: routes in both lists → remove from whitelist
+        // Remove conflicts
         whitelist.RemoveAll(x => blacklist.Contains(x));
+
+        // Check if route matches any pattern in the lists (5-pattern matching)
+        bool IsMatch(List<string> list) => list.Any(r =>
+            r.Trim().Equals(origin, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(origin + destination, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(originCountry + destCountry, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(originCountry + destination, StringComparison.OrdinalIgnoreCase) ||
+            r.Trim().Equals(origin + destCountry, StringComparison.OrdinalIgnoreCase));
 
         // Priority: whitelist first
         if (whitelist.Count > 0)
-            return whitelist.Contains(route);
+            return IsMatch(whitelist);
 
         // Then: blacklist
         if (blacklist.Count > 0)
-            return !blacklist.Contains(route);
+            return !IsMatch(blacklist);
 
         // Default: allow
         return true;
@@ -332,17 +372,8 @@ public sealed class SearchFlightQueryHandler(
 
     // ── Airline ignore ────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Filters out fares that match any of the agent's airline ignore rules.
-    ///
-    /// Rule semantics (from agent_airline_ignores):
-    ///   filter_by_plating     — suppresses if fare's PlatingCarrier matches
-    ///   filter_by_any_segment — suppresses if ANY segment airline matches
-    ///   filter_by_all_segments— suppresses if ALL segment airlines match
-    /// </summary>
     private static List<FareDataDto> ApplyAirlineIgnores(
-        List<FareDataDto>                    fares,
-        IReadOnlyList<AirlineIgnoreDto> ignores)
+        List<FareDataDto> fares, IReadOnlyList<AirlineIgnoreDto> ignores)
     {
         return fares.Where(fare => !ShouldIgnore(fare, ignores)).ToList();
     }
@@ -353,12 +384,10 @@ public sealed class SearchFlightQueryHandler(
         {
             var code = rule.AirlineCode;
 
-            // Plating carrier = fare.Airline (the main carrier)
             if (rule.FilterByPlating &&
                 string.Equals(fare.Airline, code, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Collect all segment airlines (outbound + return)
             var segmentAirlines = fare.OutboundSegments
                 .Concat(fare.ReturnSegments)
                 .Select(s => s.Airline)
@@ -376,26 +405,58 @@ public sealed class SearchFlightQueryHandler(
         return false;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Search analytics tracking ─────────────────────────────────────────────
 
-    private async Task<IEnumerable<FareDataDto>> SafeSearchAsync(
-        IFlightEngine engine, SearchFlightRequest request, CancellationToken ct)
+    private async Task TrackSearchAnalyticAsync(
+        SearchFlightQuery query, AgentConfigDto? agentConfig, string sources, CancellationToken ct)
     {
         try
         {
-            return await engine.SearchFlightAsync(request, ct);
+            var itinerary = query.ReturnDate.HasValue ? 2 : 1;
+            var flightType = await IsDomesticFlightAsync(query.Origin, query.Destination, ct);
+
+            var entity = SearchAnalyticEntity.Create(
+                agentCode: query.AgentCode,
+                startPoint: query.Origin,
+                endPoint: query.Destination,
+                itinerary: itinerary,
+                departDate: query.DepartDate,
+                returnDate: query.ReturnDate,
+                flightType: flightType,
+                ipAddress: query.IpAddress,
+                sources: sources);
+
+            await searchAnalyticRepository.AddSearchAnalyticAsync(entity, ct);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Engine {Source} failed during search. Skipping.", engine.Source);
-            return [];
+            logger.LogWarning(ex, "Failed to track search analytics for {Origin}→{Destination}",
+                query.Origin, query.Destination);
         }
     }
 
+    private async Task<bool> IsDomesticFlightAsync(
+        string origin, string destination, CancellationToken ct)
+    {
+        try
+        {
+            var countryCodes = await geoAirportRepository.GetCountryCodesAsync(
+                new[] { origin, destination }, ct);
+
+            return countryCodes.TryGetValue(origin, out var originCountry)
+                && countryCodes.TryGetValue(destination, out var destCountry)
+                && string.Equals(originCountry, destCountry, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     private static string BuildCacheKey(SearchFlightQuery q)
     {
-        // AgentCode PHẢI nằm trong key vì commission adjust làm TotalFare khác nhau theo agent.
-        // ReturnDate PHẢI nằm trong key để phân biệt one-way vs round-trip.
         string agent = string.IsNullOrWhiteSpace(q.AgentCode) ? "anon" : q.AgentCode.ToLowerInvariant();
         string returnPart = q.ReturnDate.HasValue ? q.ReturnDate.Value.ToString("yyyyMMdd") : "ow";
         return $"search:{agent}:{q.Origin}:{q.Destination}:{q.DepartDate:yyyyMMdd}:{returnPart}:{q.AdultCount}:{q.ChildCount}:{q.InfantCount}:{q.Currency}";

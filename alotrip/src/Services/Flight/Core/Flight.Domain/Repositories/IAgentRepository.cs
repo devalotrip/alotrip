@@ -38,6 +38,7 @@ public interface IAgentRepository
     Task AddAgentPccAsync(AgentPccEntity entity, CancellationToken ct = default);
     Task<bool> AgentPccExistsAsync(int agentId, string pcc, CancellationToken ct = default);
     Task<bool> DeleteAgentPccAsync(int id, CancellationToken ct = default);
+    Task<IEnumerable<AgentPccEntity>> GetActivePccsByAgentIdAsync(int agentId, CancellationToken ct = default);
 
     // LccInfo operations
     IQueryable<LccInfoEntity> GetLccInfosQuery();

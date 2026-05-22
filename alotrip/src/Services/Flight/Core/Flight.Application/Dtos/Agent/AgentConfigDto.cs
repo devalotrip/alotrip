@@ -6,6 +6,7 @@ namespace Flight.Application.Dtos;
 /// </summary>
 public sealed class AgentConfigDto
 {
+    public int AgentId { get; init; }
     public string AgentCode { get; init; } = default!;
 
     // ── Engine flags (from agents table) ──────────────────────────────────────

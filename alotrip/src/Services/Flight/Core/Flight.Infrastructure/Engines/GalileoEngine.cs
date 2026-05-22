@@ -25,7 +25,7 @@ public sealed class GalileoEngine : IFlightEngine
 {
     // ── Config keys ─────────────────────────────────────────────────────────
     private const string HttpClientName   = "GalileoWS";
-    private const string BlockedAirlines  = "GP,A1"; // block GP and A1 like the legacy engine
+    private static readonly string[] BlockedAirlines = ["GP", "A1"];
 
     private readonly ILogger<GalileoEngine>  _logger;
     private readonly IHttpClientFactory       _httpFactory;
@@ -51,12 +51,9 @@ public sealed class GalileoEngine : IFlightEngine
     public async Task<IEnumerable<FareDataDto>> SearchFlightAsync(
         SearchFlightRequest req, CancellationToken ct = default)
     {
-        // Galileo only handles international routes (legacy rule: skip VN→VN)
-        // TODO: compare country codes from geo lookup once available; for now,
-        //       allow all routes and let the XML response be empty for domestic.
         try
         {
-            string pcc = _config["Galileo:Pcc"] ?? "DEFAULT";
+            string pcc = req.PccCode ?? _config["Galileo:Pcc"] ?? "DEFAULT";
             bool   isRoundTrip = req.TripType == TripType.RoundTrip;
 
             string xmlRequest = BuildSearchRequest(
@@ -81,10 +78,8 @@ public sealed class GalileoEngine : IFlightEngine
     public async Task<FareDataDto?> VerifyFareAsync(
         string fareId, string sessionData, CancellationToken ct = default)
     {
-        // Galileo "verify" = retrieve the GDS fare by PNR / quote
-        // sessionData carries the serialised FareDataDto JSON (set during Search)
         await Task.CompletedTask;
-        return null; // TODO: implement if required by product
+        return null;
     }
 
     public async Task<BookResultDto> BookFlightAsync(
@@ -92,8 +87,6 @@ public sealed class GalileoEngine : IFlightEngine
     {
         try
         {
-            // Build PNRBFManagement_11 XML — passenger names + segments
-            // session / fareId carries the original FareDataDto JSON
             string xmlRequest = BuildBookRequest(req);
             string pcc        = _config["Galileo:Pcc"] ?? "DEFAULT";
 
@@ -109,7 +102,7 @@ public sealed class GalileoEngine : IFlightEngine
             {
                 IsSuccess   = true,
                 BookingCode = bookingCode,
-                ExpiresAt   = DateTime.UtcNow.AddHours(24) // default; adjusted per departure window
+                ExpiresAt   = DateTime.UtcNow.AddHours(24)
             };
         }
         catch (Exception ex)
@@ -122,13 +115,12 @@ public sealed class GalileoEngine : IFlightEngine
     public async Task<IssueTicketResultDto> IssueTicketAsync(
         string bookingCode, string sessionData, CancellationToken ct = default)
     {
-        // Galileo does not expose issue-ticket directly; ticketing is a back-office action.
         await Task.CompletedTask;
         return new IssueTicketResultDto { IsSuccess = false, ErrorMessage = "Galileo: issue ticket is a back-office action." };
     }
 
     // =========================================================================
-    // Build XML request (ported from GenerateXmlRequest — no dependency on old library)
+    // Build XML request
     // =========================================================================
 
     internal static string BuildSearchRequest(
@@ -158,51 +150,47 @@ public sealed class GalileoEngine : IFlightEngine
 
     private static string BuildGenAvailXml(string date, string from, string to, int seats) =>
         $"<GenAvail>" +
-        $"<NumSeats>{seats}</NumSeats><Class></Class>" +
+        $"<NumSeats>{seats}</NumSeats>" +
         $"<StartDt>{date}</StartDt><StartPt>{from}</StartPt><EndPt>{to}</EndPt>" +
-        $"<StartTm></StartTm><TmWndInd></TmWndInd><StartTmWnd></StartTmWnd><EndTmWnd></EndTmWnd>" +
-        $"<JrnyTm></JrnyTm><FltTypeInd>E</FltTypeInd><FltTypePref></FltTypePref>" +
-        $"<StartPtInd>A</StartPtInd><EndPtInd>A</EndPtInd><IgnoreTSPref>N</IgnoreTSPref>" +
+        $"<FltTypeInd>E</FltTypeInd><StartPtInd>A</StartPtInd><EndPtInd>A</EndPtInd><IgnoreTSPref>N</IgnoreTSPref>" +
         $"</GenAvail>";
 
     private static string BuildPassengerXml(int adult, int child, int infant)
     {
-        var sb = new StringBuilder("<PassengerType>");
+        var sb = new StringBuilder("<PassengerType><PsgrAry>");
         int n = 1;
         for (int i = 1; i <= adult; i++, n++)
-            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC></PTC><TIC></TIC></Psgr>");
+            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC></PTC><Age></Age><PricePTCOnly></PricePTCOnly><DiscOrIncrInd></DiscOrIncrInd><AmtOrPercent></AmtOrPercent><PersonalGeoType></PersonalGeoType><PersonalGeoData></PersonalGeoData><TIC></TIC><TkDesignator></TkDesignator><TkCode></TkCode></Psgr>");
         for (int i = 1; i <= child; i++, n++)
-            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC>CNN</PTC><TIC></TIC><Age>05</Age></Psgr>");
+            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC>CNN</PTC><TIC></TIC><Age>05</Age><PricePTCOnly></PricePTCOnly><DiscOrIncrInd></DiscOrIncrInd><AmtOrPercent></AmtOrPercent><PersonalGeoType></PersonalGeoType><PersonalGeoData></PersonalGeoData><TkDesignator></TkDesignator><TkCode></TkCode></Psgr>");
         for (int i = 1; i <= infant; i++, n++)
-            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC>INF</PTC><TIC></TIC></Psgr>");
-        sb.Append("</PassengerType>");
+            sb.Append($"<Psgr><LNameNum>{n}</LNameNum><PsgrNum>{n}</PsgrNum><AbsNameNum>{n}</AbsNameNum><PTC>INF</PTC><TIC></TIC><Age></Age><PricePTCOnly></PricePTCOnly><DiscOrIncrInd></DiscOrIncrInd><AmtOrPercent></AmtOrPercent><PersonalGeoType></PersonalGeoType><PersonalGeoData></PersonalGeoData><TkDesignator></TkDesignator><TkCode></TkCode></Psgr>");
+        sb.Append("</PsgrAry></PassengerType>");
         return sb.ToString();
     }
 
     private static string BuildOptimizeXml() =>
-        "<Optimize><RecType>1001</RecType><KlrID><ID>AAFI</ID></KlrID></Optimize>" +
-        "<Optimize><RecType>1425</RecType>" +
-        "<KlrID><ID>EROR</ID></KlrID><KlrID><ID>GFGQ</ID></KlrID>" +
-        "<KlrID><ID>GFXI</ID></KlrID><KlrID><ID>GFPI</ID></KlrID>" +
-        "<KlrID><ID>GFRI</ID></KlrID><KlrID><ID>GFJG</ID></KlrID>" +
-        "<KlrID><ID>GFMM</ID></KlrID>" +
-        "</Optimize>";
+        "<Optimize><RecType>1001</RecType><KlrIDAry><KlrID>AAFI</KlrID></KlrIDAry></Optimize>" +
+        "<Optimize><RecType>1425</RecType><KlrIDAry>" +
+        "<KlrID>EROR</KlrID><KlrID>GFGQ</KlrID>" +
+        "<KlrID>GFXI</KlrID><KlrID>GFPI</KlrID>" +
+        "<KlrID>GFRI</KlrID><KlrID>GFJG</KlrID>" +
+        "<KlrID>GFMM</KlrID>" +
+        "</KlrIDAry></Optimize>";
 
     private static string BuildPFInfoXml() =>
         "<PFInfo><ReqAirVPFs>Y</ReqAirVPFs>" +
-        "<PF><StartODRange>00</StartODRange><EndODRange>00</EndODRange><CRS>1G</CRS>" +
-        "<AirV></AirV><Acct></Acct><PublishedFaresInd>Y</PublishedFaresInd>" +
-        "<Type>A</Type><AcctCodeRestrict></AcctCodeRestrict></PF>" +
+        "<PFAry><PF><StartODRange>00</StartODRange><EndODRange>00</EndODRange><CRS>1G</CRS>" +
+        "<PCC></PCC><AirV></AirV><Acct></Acct><Contract></Contract><PublishedFaresInd>Y</PublishedFaresInd>" +
+        "<Type>A</Type><PFTypeRestrict></PFTypeRestrict><AcctCodeRestrict></AcctCodeRestrict><Spare1></Spare1></PF></PFAry>" +
         "</PFInfo>";
 
     // =========================================================================
-    // Build book request (PNRBFManagement_11)
+    // Build book request
     // =========================================================================
 
     internal static string BuildBookRequest(BookFlightRequest req)
     {
-        // Minimal PNR build — passenger names + end-transaction
-        // Segments come from the sessionData; for now we emit the outer wrapper
         var sb = new StringBuilder("<PNRBFManagement_11>");
         sb.Append(BuildPaxNames(req.Passengers, req.ContactPhone));
         sb.Append(BuildEndTransaction());
@@ -240,7 +228,7 @@ public sealed class GalileoEngine : IFlightEngine
         "<EndTransactionMods><ETInd>E</ETInd><RcvdFrom>GALILEO</RcvdFrom><SkipTEdits>Y</SkipTEdits></EndTransactionMods>";
 
     // =========================================================================
-    // SOAP transport — replaces GalileoWS ASMX proxy
+    // SOAP transport
     // =========================================================================
 
     private async Task<XmlDocument?> SubmitSoapAsync(string xmlBody, string pcc, CancellationToken ct)
@@ -253,7 +241,6 @@ public sealed class GalileoEngine : IFlightEngine
             ?? throw new InvalidOperationException("Galileo:Password not configured");
         int    timeout  = int.Parse(_config["Galileo:TimeoutSeconds"] ?? "120");
 
-        // SOAP 1.1 envelope wrapping the raw Galileo XML request
         string soapEnvelope =
             $"<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
             $"<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
@@ -289,7 +276,6 @@ public sealed class GalileoEngine : IFlightEngine
         if (string.IsNullOrWhiteSpace(raw))
             return null;
 
-        // Extract the inner XML from the SOAP Body / SubmitXmlResult element
         var soapDoc = new XmlDocument();
         soapDoc.LoadXml(raw);
         var ns     = new XmlNamespaceManager(soapDoc.NameTable);
@@ -310,7 +296,7 @@ public sealed class GalileoEngine : IFlightEngine
         => xml.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
     // =========================================================================
-    // Parse response XML — ported from GetFareData / GetAirAvail / etc.
+    // Parse response XML — matches old GetFareData logic exactly
     // =========================================================================
 
     private List<FareDataDto> ParseFareData(XmlDocument doc, SearchFlightRequest req, string pcc)
@@ -318,15 +304,14 @@ public sealed class GalileoEngine : IFlightEngine
         var result = new List<FareDataDto>();
         try
         {
-            var blocked = BlockedAirlines.Split(',');
             bool isRoundTrip = req.TripType == TripType.RoundTrip;
 
-            // AirAvail nodes — first is departure, second (if present) is return
-            var airAvails     = ParseAirAvails(doc);
-            var departAvail   = airAvails.Count > 0 ? airAvails[0] : new List<AvailFltInfo>();
-            var returnAvail   = airAvails.Count > 1 ? airAvails[1] : new List<AvailFltInfo>();
+            // 1. Parse AirAvail lists (departure + optional return)
+            var airAvailLists = ParseAirAvailLists(doc);
+            var departAirAvail = airAvailLists.Count > 0 ? airAvailLists[0] : new List<AvailFltInfo>();
+            var returnAirAvail = airAvailLists.Count > 1 ? airAvailLists[1] : new List<AvailFltInfo>();
 
-            // FareInfo nodes
+            // 2. Parse FareInfo nodes
             XmlNodeList fareInfoNodes = doc.SelectNodes("//FareQuoteSuperBB_11/FareInfo")!;
             int fareIndex = 0;
 
@@ -335,23 +320,28 @@ public sealed class GalileoEngine : IFlightEngine
                 var fareInfo = new XmlDocument();
                 fareInfo.LoadXml(fareInfoEl.OuterXml);
 
-                // PlatingCarrier
+                // ─ PlatingCarrier ────────────────────────────────────────────
                 string platingCarrier = ParsePlatingCarrier(fareInfo);
-                if (blocked.Contains(platingCarrier))
+                if (BlockedAirlines.Contains(platingCarrier))
                     continue;
 
-                // Pax fares
+                // ── Pax fares ─────────────────────────────────────────────────
                 double fareAdult = 0, baseFareAdult = 0, taxAdult = 0;
                 double fareChild = 0, baseFareChild = 0, taxChild  = 0;
                 double fareInf   = 0, baseFareInf   = 0, taxInf    = 0;
                 int    adultCnt  = 0, childCnt       = 0, infCnt    = 0;
                 string currency  = req.Currency;
 
-                foreach (XmlElement psgrEl in fareInfo.SelectNodes("//PsgrTypes")!)
+                // Collect PsgrTypes for BIC mapping later
+                var psgrTypesList = new List<(string UniqueKey, string PICReq, int PICPsgrs)>();
+
+                foreach (XmlElement psgrEl in fareInfo.SelectNodes("//FareInfo/PsgrTypes")!)
                 {
                     string picReq    = psgrEl.SelectSingleNode("PICReq/text()")?.Value ?? "";
                     string psgrs     = psgrEl.SelectSingleNode("PICPsgrs/text()")?.Value ?? "0";
                     string uniqueKey = psgrEl.SelectSingleNode("UniqueKey/text()")?.Value ?? "";
+
+                    psgrTypesList.Add((uniqueKey, picReq, int.TryParse(psgrs, out var c) ? c : 0));
 
                     (double total, double baseFare, double tax) = ParseQuoteAmounts(fareInfo, uniqueKey, currency);
 
@@ -360,14 +350,22 @@ public sealed class GalileoEngine : IFlightEngine
                     else if (picReq == "INF")  { infCnt = int.Parse(psgrs); fareInf = total; baseFareInf = baseFare; taxInf = tax; }
                 }
 
-                // Departure segments from FlightItemCrossRef
-                var departSegs = ParseFlightSegments(fareInfo, departAvail, "1");
-                var returnSegs = isRoundTrip ? ParseFlightSegments(fareInfo, returnAvail, "2") : [];
+                // ── LastTkDt ──────────────────────────────────────────────────
+                DateTime lastTkDt = DateTime.UtcNow.AddDays(1);
+                foreach (XmlElement gqd in fareInfo.SelectNodes("//FareInfo/GenQuoteDetails")!)
+                {
+                    string? lastTkVal = gqd.SelectSingleNode("LastTkDt/text()")?.Value;
+                    if (!string.IsNullOrEmpty(lastTkVal))
+                    {
+                        var dt = FlightEngineHelper.GetDate(lastTkVal, "1200");
+                        if (dt > lastTkDt) lastTkDt = dt;
+                    }
+                }
 
-                // ── Extract RulesInfo XML fragments for GetFareRulesAsync ─────
+                // ─ RulesInfo XML fragments ───────────────────────────────────
                 var departRulesXml = new List<string>();
                 var returnRulesXml = new List<string>();
-                var rulesInfoNodes = fareInfo.SelectNodes("//RulesInfo");
+                var rulesInfoNodes = fareInfo.SelectNodes("//FareInfo/RulesInfo");
                 if (rulesInfoNodes != null)
                 {
                     foreach (XmlElement riEl in rulesInfoNodes)
@@ -382,7 +380,52 @@ public sealed class GalileoEngine : IFlightEngine
                     }
                 }
 
-                // Store PCC + RulesInfo in SessionData for later use
+                // ─ PenaltyRules (for NoRefund check) ─────────────────────────
+                var penaltyRulesDepart = new List<PenaltyRuleInfo>();
+                var penaltyRulesReturn = new List<PenaltyRuleInfo>();
+                var penaltyNodes = fareInfo.SelectNodes("//FareInfo/PenaltyRules");
+                if (penaltyNodes != null)
+                {
+                    foreach (XmlElement prEl in penaltyNodes)
+                    {
+                        var fareCompNum = prEl.SelectSingleNode("FareComponentNum/text()")?.Value ?? "";
+                        var depItems = new List<DepRequiredItem>();
+                        foreach (XmlElement depEl in prEl.SelectNodes(".//DepRequiredAry/DepRequiredAryItem")!)
+                        {
+                            depItems.Add(new DepRequiredItem
+                            {
+                                TkNonRef = depEl.SelectSingleNode("TkNonRef/text()")?.Value ?? ""
+                            });
+                        }
+                        var info = new PenaltyRuleInfo { FareComponentNum = fareCompNum, DepRequiredItems = depItems };
+                        if (fareCompNum == "1") penaltyRulesDepart.Add(info);
+                        else if (fareCompNum == "2") penaltyRulesReturn.Add(info);
+                    }
+                }
+
+                // ── Build departure flight options ────────────────────────────
+                var departOptions = BuildFlightOptions(fareInfo, departAirAvail, psgrTypesList, penaltyRulesDepart, "1");
+
+                // ── Build return flight options (if round-trip) ───────────────
+                var returnOptions = new List<FlightOptionDto>();
+                int itineraryType = 1;
+                if (isRoundTrip && airAvailLists.Count > 1)
+                {
+                    returnOptions = BuildFlightOptions(fareInfo, returnAirAvail, psgrTypesList, penaltyRulesReturn, "2");
+                    itineraryType = 2;
+                }
+
+                // ── Validate: must have at least one valid option ─────────────
+                if (departOptions.Count == 0) continue;
+                if (itineraryType == 2 && returnOptions.Count == 0) continue;
+
+                // ── Rounding (VND→nearest 1000, other→ceiling) ──────────────
+                fareAdult = FlightEngineHelper.RoundFare(fareAdult, currency);
+                fareChild = FlightEngineHelper.RoundFare(fareChild, currency);
+                fareInf   = FlightEngineHelper.RoundFare(fareInf,   currency);
+                double totalFare = (adultCnt * fareAdult) + (childCnt * fareChild) + (infCnt * fareInf);
+
+                // ─ SessionData ───────────────────────────────────────────────
                 string sessionData = JsonSerializer.Serialize(new GalileoSessionData
                 {
                     Pcc = pcc,
@@ -390,48 +433,45 @@ public sealed class GalileoEngine : IFlightEngine
                     ReturnRulesInfo    = returnRulesXml
                 });
 
-                // Rounding (VND→nearest 1000, other→ceiling)
-                fareAdult = FlightEngineHelper.RoundFare(fareAdult, currency);
-                fareChild = FlightEngineHelper.RoundFare(fareChild, currency);
-                fareInf   = FlightEngineHelper.RoundFare(fareInf,   currency);
-                double totalFare = (adultCnt * fareAdult) + (childCnt * fareChild) + (infCnt * fareInf);
-
-                // LastTkDt
-                XmlNode? lastTkNode = fareInfo.SelectSingleNode("//GenQuoteDetails[1]/LastTkDt/text()");
-                DateTime lastTkDt   = lastTkNode?.Value is { } lastTkVal
-                    ? FlightEngineHelper.GetDate(lastTkVal, "1200")
-                    : DateTime.UtcNow.AddDays(1);
-
                 var dto = new FareDataDto
                 {
-                    FareId           = $"galileo-{pcc}-{fareIndex++}",
-                    Source           = FlightSource.Galileo,
-                    Airline          = platingCarrier,
-                    Origin           = req.Origin,
-                    Destination      = req.Destination,
-                    DepartDate       = req.DepartDate,
-                    ReturnDate       = isRoundTrip ? req.ReturnDate : null,
-                    TripType         = req.TripType,
-                    AdultCount       = adultCnt,
-                    ChildCount       = childCnt,
-                    InfantCount      = infCnt,
-                    AdultFare        = (decimal)fareAdult,
-                    ChildFare        = (decimal)fareChild,
-                    InfantFare       = (decimal)fareInf,
-                    TaxAmount        = (decimal)(taxAdult + taxChild + taxInf),
-                    ServiceFee       = 0,
-                    TotalFare        = (decimal)totalFare,
-                    Currency         = currency,
-                    PccCode          = pcc,
-                    SessionData      = sessionData,
-                    OutboundSegments = departSegs,
-                    ReturnSegments   = returnSegs,
-                    CachedAt         = DateTime.UtcNow,
-                    ExpiresAt        = lastTkDt
+                    FareId             = $"galileo-{pcc}-{fareIndex++}",
+                    Source             = FlightSource.Galileo,
+                    Airline            = platingCarrier,
+                    Origin             = req.Origin,
+                    Destination        = req.Destination,
+                    DepartDate         = req.DepartDate,
+                    ReturnDate         = isRoundTrip ? req.ReturnDate : null,
+                    TripType           = isRoundTrip ? TripType.RoundTrip : TripType.OneWay,
+                    AdultCount         = adultCnt,
+                    ChildCount         = childCnt,
+                    InfantCount        = infCnt,
+                    AdultFare          = (decimal)fareAdult,
+                    ChildFare          = (decimal)fareChild,
+                    InfantFare         = (decimal)fareInf,
+                    BaseFareAdult      = (decimal)baseFareAdult,
+                    BaseFareChild      = (decimal)baseFareChild,
+                    BaseFareInfant     = (decimal)baseFareInf,
+                    TaxAdult           = (decimal)taxAdult,
+                    TaxChild           = (decimal)taxChild,
+                    TaxInfant          = (decimal)taxInf,
+                    ServiceFee         = 0,
+                    TotalFare          = (decimal)totalFare,
+                    Currency           = currency,
+                    PccCode            = pcc,
+                    SessionData        = sessionData,
+                    OutboundOptions    = departOptions,
+                    ReturnOptions      = returnOptions,
+                    DepartureRulesInfo = departRulesXml,
+                    ReturnRulesInfo    = returnRulesXml,
+                    CachedAt           = DateTime.UtcNow,
+                    ExpiresAt          = lastTkDt
                 };
 
-                if (dto.OutboundSegments.Count > 0)
-                    result.Add(dto);
+                // Populate backward-compatible flat segment lists
+                dto.FlattenSegments();
+
+                result.Add(dto);
             }
         }
         catch (Exception ex)
@@ -441,11 +481,228 @@ public sealed class GalileoEngine : IFlightEngine
         return result;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Flight option builder (matches old Chunk + Flight construction) ───────
+
+    /// <summary>
+    /// Builds flight options from FlightItemCrossRef + AirAvail data.
+    /// Matches old code: GetAvailFlt → Chunk by ODNumLegs → build Flight objects.
+    /// </summary>
+    private List<FlightOptionDto> BuildFlightOptions(
+        XmlDocument fareInfo,
+        List<AvailFltInfo> airAvail,
+        List<(string UniqueKey, string PICReq, int PICPsgrs)> psgrTypes,
+        List<PenaltyRuleInfo> penaltyRules,
+        string odComponent) // "1" = departure, "2" = return
+    {
+        var options = new List<FlightOptionDto>();
+
+        var crossRefs = fareInfo.SelectNodes("//FareInfo/FlightItemCrossRef")!;
+        int refIndex = odComponent == "1" ? 0 : 1;
+        if (crossRefs.Count <= refIndex) return options;
+
+        var crossRef = crossRefs[refIndex] as XmlElement;
+        if (crossRef is null) return options;
+
+        // ODNumLegs = số segment tạo thành 1 option
+        int segmentNum = 1;
+        string? odNumLegs = crossRef.SelectSingleNode("ODNumLegs/text()")?.Value;
+        if (!string.IsNullOrEmpty(odNumLegs))
+            segmentNum = int.Parse(odNumLegs);
+
+        // Build flat list of AvailFlt from cross-ref
+        var flatAvailFlts = new List<AvailFltInfo>();
+        foreach (XmlElement fltItem in crossRef.SelectNodes(".//FltItemAry/FltItem")!)
+        {
+            int idx = int.TryParse(fltItem.SelectSingleNode("IndexNum/text()")?.Value, out var i) ? i - 1 : -1;
+            if (idx < 0 || idx >= airAvail.Count) continue;
+
+            var a = airAvail[idx].ShallowCopy();
+
+            // Pacific Airline label
+            a.FlightNumber = PacificAirlineHelper.AppendPacificLabel(a.AirlineCode, a.FlightNumber);
+
+            // BIC (booking class) mapping per passenger type
+            ApplyBicMapping(fltItem, a, psgrTypes);
+
+            flatAvailFlts.Add(a);
+        }
+
+        // Chunk into options (matches old Common.Chunk)
+        var chunks = Chunk(flatAvailFlts, segmentNum);
+        int optionId = 0;
+
+        foreach (var chunk in chunks)
+        {
+            if (chunk.Count == 0) continue;
+
+            // Check blocked airlines in any segment
+            bool isBlocked = chunk.Any(s => BlockedAirlines.Contains(s.AirlineCode));
+            if (isBlocked) continue;
+
+            // Check NoRefund from PenaltyRules
+            bool noRefund = false;
+            foreach (var pr in penaltyRules)
+            {
+                foreach (var dep in pr.DepRequiredItems)
+                {
+                    if (dep.TkNonRef == "Y") { noRefund = true; break; }
+                }
+                if (noRefund) break;
+            }
+
+            // Calculate StopTime between consecutive segments
+            for (int i = 0; i < chunk.Count - 1; i++)
+            {
+                chunk[i].StopTime = (int)(chunk[i + 1].StartDate - chunk[i].EndDate).TotalMinutes;
+            }
+
+            // Mark last segment
+            if (chunk.Count > 0)
+                chunk[^1].IsLastSegment = true;
+
+            var option = new FlightOptionDto
+            {
+                OptionId    = optionId++,
+                Airline     = chunk[0].AirlineCode,
+                Origin      = chunk[0].StartPoint,
+                Destination = chunk[^1].EndPoint,
+                DepartDate  = chunk[0].StartDate,
+                ArriveDate  = chunk[^1].EndDate,
+                Duration    = chunk[0].Duration,
+                StopCount   = chunk.Count - 1,
+                NoRefund    = noRefund,
+                Segments    = chunk.Select(s => new FlightSegmentDto
+                {
+                    FlightNumber     = s.FlightNumber,
+                    Airline          = s.AirlineCode,
+                    Origin           = s.StartPoint,
+                    Destination      = s.EndPoint,
+                    DepartTime       = s.StartDate,
+                    ArriveTime       = s.EndDate,
+                    ClassAdult       = s.ClassAdult,
+                    ClassChild       = s.ClassChild,
+                    ClassInfant      = s.ClassInfant,
+                    AircraftType     = s.Equipment,
+                    StopCount        = s.StopCount,
+                    Duration         = s.Duration,
+                    StopTime         = s.StopTime,
+                    AirportChange    = s.AirportChange,
+                    OperatingAirline = s.OperatingAirline,
+                    StartTerminal    = s.StartTerminal,
+                    EndTerminal      = s.EndTerminal,
+                    IsLastSegment    = s.IsLastSegment,
+                }).ToList()
+            };
+
+            options.Add(option);
+        }
+
+        return options;
+    }
+
+    /// <summary>
+    /// Maps booking class (BIC) from FlightItemCrossRef to AvailFlt per passenger type.
+    /// Matches old code: fltItem.BICAry → availFlt.ClassAdult/ClassChild/ClassInfant.
+    /// </summary>
+    private static void ApplyBicMapping(
+        XmlElement fltItem,
+        AvailFltInfo avail,
+        List<(string UniqueKey, string PICReq, int PICPsgrs)> psgrTypes)
+    {
+        var bicInfos = fltItem.SelectNodes(".//BICAry/BICInfo");
+        if (bicInfos is null || bicInfos.Count == 0) return;
+
+        if (bicInfos.Count == 1)
+        {
+            // Single BIC → apply to all passenger types
+            string bic = bicInfos[0].SelectSingleNode("BIC/text()")?.Value ?? "";
+            avail.ClassAdult  = bic;
+            avail.ClassChild  = bic;
+            avail.ClassInfant = bic;
+        }
+        else
+        {
+            // Multiple BIC → map by PsgrDescNumAry
+            foreach (XmlElement bicInfoEl in bicInfos)
+            {
+                string bic = bicInfoEl.SelectSingleNode("BIC/text()")?.Value ?? "";
+                var numNodes = bicInfoEl.SelectNodes(".//PsgrDescNumAry/Num");
+
+                if (numNodes is null || numNodes.Count == 0)
+                {
+                    // No passenger mapping → apply to all
+                    avail.ClassAdult  = bic;
+                    avail.ClassChild  = bic;
+                    avail.ClassInfant = bic;
+                }
+                else
+                {
+                    foreach (XmlElement numEl in numNodes)
+                    {
+                        int psgrIndex = int.Parse(numEl.InnerText) - 1;
+                        if (psgrIndex < 0 || psgrIndex >= psgrTypes.Count) continue;
+
+                        var ptc = psgrTypes[psgrIndex].PICReq;
+                        if (ptc is "AD" or "ADT")      avail.ClassAdult  = bic;
+                        else if (ptc is "CNN" or "CHD") avail.ClassChild  = bic;
+                        else if (ptc == "INF")           avail.ClassInfant = bic;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Splits a list into chunks of specified size (matches old Common.Chunk).
+    /// </summary>
+    private static List<List<T>> Chunk<T>(List<T> source, int chunkSize)
+    {
+        var result = new List<List<T>>();
+        for (int i = 0; i < source.Count; i += chunkSize)
+        {
+            result.Add(source.GetRange(i, Math.Min(chunkSize, source.Count - i)));
+        }
+        return result;
+    }
+
+    // ── AirAvail parser ───────────────────────────────────────────────────────
+
+    private static List<List<AvailFltInfo>> ParseAirAvailLists(XmlDocument doc)
+    {
+        var result = new List<List<AvailFltInfo>>();
+        foreach (XmlElement avail in doc.SelectNodes("//FareQuoteSuperBB_11/AirAvail")!)
+        {
+            var segments = new List<AvailFltInfo>();
+            foreach (XmlElement flt in avail.SelectNodes(".//AvailFlt")!)
+            {
+                segments.Add(new AvailFltInfo
+                {
+                    AirlineCode      = flt.SelectSingleNode("AirV/text()")?.Value ?? "",
+                    FlightNumber     = flt.SelectSingleNode("FltNum/text()")?.Value ?? "",
+                    StartPoint       = flt.SelectSingleNode("StartAirp/text()")?.Value ?? "",
+                    EndPoint         = flt.SelectSingleNode("EndAirp/text()")?.Value ?? "",
+                    StartDate        = ParseGalileoDate(flt, "StartDt", "StartTm"),
+                    EndDate          = ParseGalileoDate(flt, "EndDt", "EndTm"),
+                    Equipment        = flt.SelectSingleNode("Equip/text()")?.Value ?? "",
+                    Duration         = int.TryParse(flt.SelectSingleNode("JrnyTm/text()")?.Value, out var d) ? d : 0,
+                    StopCount        = int.TryParse(flt.SelectSingleNode("NumStops/text()")?.Value, out var s) ? s : 0,
+                    AirportChange    = flt.SelectSingleNode("AirpChg/text()")?.Value,
+                    OperatingAirline = flt.SelectSingleNode("OpAirV/text()")?.Value,
+                    StartTerminal    = flt.SelectSingleNode("StartTerminal/text()")?.Value,
+                    EndTerminal      = flt.SelectSingleNode("EndTerminal/text()")?.Value,
+                    FlightTime       = int.TryParse(flt.SelectSingleNode("FltTm/text()")?.Value, out var ft) ? ft : 0,
+                });
+            }
+            result.Add(segments);
+        }
+        return result;
+    }
+
+    // ── Fare parsing helpers ──────────────────────────────────────────────────
 
     private static string ParsePlatingCarrier(XmlDocument fareInfo)
     {
-        foreach (XmlElement msgEl in fareInfo.SelectNodes("//InfoMsg")!)
+        foreach (XmlElement msgEl in fareInfo.SelectNodes("//FareInfo/InfoMsg")!)
         {
             string text = msgEl.SelectSingleNode("Text/text()")?.Value ?? "";
             if (text.Contains("DEFAULT PLATING CARRIER"))
@@ -454,19 +711,19 @@ public sealed class GalileoEngine : IFlightEngine
                 return parts[^1].Trim();
             }
         }
-        return fareInfo.SelectSingleNode("//DepartRulesInfo/AirV/text()")?.Value ?? "";
+        return fareInfo.SelectSingleNode("//FareInfo/DepartRulesInfo/AirV/text()")?.Value ?? "";
     }
 
     private static (double total, double baseFare, double tax) ParseQuoteAmounts(
         XmlDocument fareInfo, string uniqueKey, string currency)
     {
-        foreach (XmlElement qd in fareInfo.SelectNodes("//GenQuoteDetails")!)
+        foreach (XmlElement qd in fareInfo.SelectNodes("//FareInfo/GenQuoteDetails")!)
         {
             if (qd.SelectSingleNode("UniqueKey/text()")?.Value != uniqueKey) continue;
 
-            double totAmt    = ParseDecimalPos(qd, "TotAmt",    "TotDecPos");
-            double equivAmt  = ParseDecimalPos(qd, "EquivAmt",  "EquivDecPos");
-            double baseAmt   = ParseDecimalPos(qd, "BaseFareAmt","BaseDecPos");
+            double totAmt   = ParseDecimalPos(qd, "TotAmt",    "TotDecPos");
+            double equivAmt = ParseDecimalPos(qd, "EquivAmt",  "EquivDecPos");
+            double baseAmt  = ParseDecimalPos(qd, "BaseFareAmt","BaseDecPos");
 
             double baseFare = equivAmt > 0 ? equivAmt : baseAmt;
             double tax      = totAmt - baseFare;
@@ -480,76 +737,6 @@ public sealed class GalileoEngine : IFlightEngine
         double amt = double.TryParse(el.SelectSingleNode($"{amtField}/text()")?.Value, out var v) ? v : 0;
         double pos = double.TryParse(el.SelectSingleNode($"{posField}/text()")?.Value, out var p) ? p : 0;
         return pos > 0 ? amt / Math.Pow(10, pos) : amt;
-    }
-
-    private static List<List<AvailFltInfo>> ParseAirAvails(XmlDocument doc)
-    {
-        var result = new List<List<AvailFltInfo>>();
-        foreach (XmlElement avail in doc.SelectNodes("//FareQuoteSuperBB_11/AirAvail")!)
-        {
-            var segments = new List<AvailFltInfo>();
-            foreach (XmlElement flt in avail.SelectNodes(".//AvailFlt")!)
-            {
-                segments.Add(new AvailFltInfo
-                {
-                    AirlineCode   = flt.SelectSingleNode("AirV/text()")?.Value     ?? "",
-                    FlightNumber  = flt.SelectSingleNode("FltNum/text()")?.Value    ?? "",
-                    StartPoint    = flt.SelectSingleNode("StartAirp/text()")?.Value ?? "",
-                    EndPoint      = flt.SelectSingleNode("EndAirp/text()")?.Value   ?? "",
-                    StartDate     = ParseGalileoDate(flt, "StartDt", "StartTm"),
-                    EndDate       = ParseGalileoDate(flt, "EndDt",   "EndTm"),
-                    Equipment     = flt.SelectSingleNode("Equip/text()")?.Value     ?? "",
-                    Duration      = int.TryParse(flt.SelectSingleNode("JrnyTm/text()")?.Value, out var d) ? d : 0,
-                    StopCount     = int.TryParse(flt.SelectSingleNode("NumStops/text()")?.Value, out var s) ? s : 0,
-                    ClassAdult    = "",  // populated in cross-ref step
-                });
-            }
-            result.Add(segments);
-        }
-        return result;
-    }
-
-    private static List<FlightSegmentDto> ParseFlightSegments(
-        XmlDocument fareInfo,
-        List<AvailFltInfo> avail,
-        string odComponent) // "1" = departure, "2" = return
-    {
-        var segs = new List<FlightSegmentDto>();
-        // FlightItemCrossRef nodes — first one is departure, second is return
-        var crossRefs = fareInfo.SelectNodes("//FlightItemCrossRef")!;
-        int refIndex  = odComponent == "1" ? 0 : 1;
-        if (crossRefs.Count <= refIndex) return segs;
-
-        var crossRef = crossRefs[refIndex] as XmlElement;
-        if (crossRef is null) return segs;
-
-        foreach (XmlElement fltItem in crossRef.SelectNodes(".//FltItemAry/FltItem")!)
-        {
-            int idx = int.TryParse(fltItem.SelectSingleNode("IndexNum/text()")?.Value, out var i) ? i - 1 : -1;
-            if (idx < 0 || idx >= avail.Count) continue;
-
-            var a = avail[idx];
-
-            // Booking class
-            string bic = fltItem.SelectSingleNode(".//BICAry/BICInfo/BIC/text()")?.Value ?? "";
-
-            // Pacific Airline label
-            string fltNum = PacificAirlineHelper.AppendPacificLabel(a.AirlineCode, a.FlightNumber);
-
-            segs.Add(new FlightSegmentDto
-            {
-                FlightNumber = fltNum,
-                Airline      = a.AirlineCode,
-                Origin       = a.StartPoint,
-                Destination  = a.EndPoint,
-                DepartTime   = a.StartDate,
-                ArriveTime   = a.EndDate,
-                CabinClass   = bic,
-                AircraftType = a.Equipment,
-                StopCount    = a.StopCount
-            });
-        }
-        return segs;
     }
 
     private static DateTime ParseGalileoDate(XmlElement el, string dayField, string timeField)
@@ -571,20 +758,10 @@ public sealed class GalileoEngine : IFlightEngine
 
     // ── Baggage & Fare Rules ──────────────────────────────────────────────────
 
-    /// <summary>
-    /// Galileo does not expose a separate baggage-options API in the current integration.
-    /// Returns an empty BaggageInfoDto.
-    /// </summary>
     public Task<BaggageInfoDto> GetBaggagesAsync(
         FareDataDto fareData, CancellationToken ct = default)
         => Task.FromResult(new BaggageInfoDto());
 
-    /// <summary>
-    /// Retrieves fare rules from Galileo/Travelport GDS using FareQuoteMultiDisplay_10.
-    /// Ported from legacy GalileoEngine.GetRulesInfo + Interface.GetFareRule.
-    /// Uses the RulesInfo XML fragments stored in SessionData during search.
-    /// itinerary: 0 = outbound (departure), 1 = return.
-    /// </summary>
     public async Task<List<FareRuleGroupDto>> GetFareRulesAsync(
         FareDataDto fareData, int itinerary, CancellationToken ct = default)
     {
@@ -594,7 +771,6 @@ public sealed class GalileoEngine : IFlightEngine
             if (string.IsNullOrWhiteSpace(fareData.SessionData))
                 return rules;
 
-            // Deserialize stored RulesInfo from search
             var session = JsonSerializer.Deserialize<GalileoSessionData>(fareData.SessionData);
             if (session is null) return rules;
 
@@ -607,12 +783,10 @@ public sealed class GalileoEngine : IFlightEngine
 
             string pcc = session.Pcc ?? fareData.PccCode ?? _config["Galileo:Pcc"] ?? "DEFAULT";
 
-            // ── Build FareQuoteMultiDisplay_10 XML ────────────────────────────
             string templateXml = BuildFareRulesRequestXml();
             var requestDoc = new XmlDocument();
             requestDoc.LoadXml(templateXml);
 
-            // Append stored RulesInfo fragments into the template
             foreach (string rulesXml in rulesInfoList)
             {
                 var frag = requestDoc.CreateDocumentFragment();
@@ -620,11 +794,9 @@ public sealed class GalileoEngine : IFlightEngine
                 requestDoc.DocumentElement?.FirstChild?.AppendChild(frag);
             }
 
-            // ── Submit to Galileo ─────────────────────────────────────────────
             XmlDocument? response = await SubmitSoapAsync(requestDoc.InnerXml, pcc, ct);
             if (response is null) return rules;
 
-            // ── Parse RulesData from response ─────────────────────────────────
             var rulesDataNodes = response.SelectNodes("//FareQuoteMultiDisplay_10/FareInfo/RulesData");
             if (rulesDataNodes == null || rulesDataNodes.Count == 0) return rules;
 
@@ -641,27 +813,19 @@ public sealed class GalileoEngine : IFlightEngine
                 allRules.Add((uniqueKey, dataType, rulesText));
             }
 
-            // "F" = title, "T" = text body. Group text entries by UniqueKey matching title.
             var titles = allRules.Where(r => r.DataType == "F").ToList();
             var texts  = allRules.Where(r => r.DataType == "T").ToList();
 
             foreach (var title in titles)
             {
-                // Title text: first 4 chars are category code, rest is the human-readable title
-                string titleText = title.Text.Length > 4
-                    ? title.Text[4..]
-                    : title.Text;
+                string titleText = title.Text.Length > 4 ? title.Text[4..] : title.Text;
 
                 var matchingTexts = texts
                     .Where(t => t.UniqueKey == title.UniqueKey)
                     .Select(t => t.Text)
                     .ToList();
 
-                rules.Add(new FareRuleGroupDto
-                {
-                    Title = titleText,
-                    Rules = matchingTexts
-                });
+                rules.Add(new FareRuleGroupDto { Title = titleText, Rules = matchingTexts });
             }
         }
         catch (Exception ex)
@@ -671,11 +835,6 @@ public sealed class GalileoEngine : IFlightEngine
         return rules;
     }
 
-    /// <summary>
-    /// Builds the FareQuoteMultiDisplay_10 XML template for fare rules retrieval.
-    /// Ported from legacy App_Data/FareRulesRequest.xml.
-    /// Action=135 requests all rule paragraphs with full text.
-    /// </summary>
     private static string BuildFareRulesRequestXml() =>
         """
         <FareQuoteMultiDisplay_10>
@@ -711,24 +870,67 @@ public sealed class GalileoEngine : IFlightEngine
         </FareQuoteMultiDisplay_10>
         """;
 
-    // ── Internal DTO (no dependency on old IBE.Models) ────────────────────────
+    // ── Internal DTOs ─────────────────────────────────────────────────────────
 
     private sealed class AvailFltInfo
     {
-        public string   AirlineCode  { get; init; } = "";
-        public string   FlightNumber { get; set; }  = "";
-        public string   StartPoint   { get; init; } = "";
-        public string   EndPoint     { get; init; } = "";
-        public DateTime StartDate    { get; init; }
-        public DateTime EndDate      { get; init; }
-        public string   Equipment    { get; init; } = "";
-        public int      Duration     { get; init; }
-        public int      StopCount    { get; init; }
-        public string   ClassAdult   { get; set; }  = "";
+        public string   AirlineCode      { get; init; } = "";
+        public string   FlightNumber     { get; set; }  = "";
+        public string   StartPoint       { get; init; } = "";
+        public string   EndPoint         { get; init; } = "";
+        public DateTime StartDate        { get; init; }
+        public DateTime EndDate          { get; init; }
+        public string   Equipment        { get; init; } = "";
+        public int      Duration         { get; init; }
+        public int      StopCount        { get; init; }
+        public string   ClassAdult       { get; set; }  = "";
+        public string   ClassChild       { get; set; }  = "";
+        public string   ClassInfant      { get; set; }  = "";
+        public int      StopTime         { get; set; }
+        public string?  AirportChange    { get; init; }
+        public string?  OperatingAirline { get; init; }
+        public string?  StartTerminal    { get; init; }
+        public string?  EndTerminal      { get; init; }
+        public int      FlightTime       { get; init; }
+        public bool     IsLastSegment    { get; set; }
+
+        public AvailFltInfo ShallowCopy() => new()
+        {
+            AirlineCode      = AirlineCode,
+            FlightNumber     = FlightNumber,
+            StartPoint       = StartPoint,
+            EndPoint         = EndPoint,
+            StartDate        = StartDate,
+            EndDate          = EndDate,
+            Equipment        = Equipment,
+            Duration         = Duration,
+            StopCount        = StopCount,
+            ClassAdult       = ClassAdult,
+            ClassChild       = ClassChild,
+            ClassInfant      = ClassInfant,
+            StopTime         = StopTime,
+            AirportChange    = AirportChange,
+            OperatingAirline = OperatingAirline,
+            StartTerminal    = StartTerminal,
+            EndTerminal      = EndTerminal,
+            FlightTime       = FlightTime,
+            IsLastSegment    = IsLastSegment,
+        };
+    }
+
+    private sealed class PenaltyRuleInfo
+    {
+        public string FareComponentNum { get; init; } = "";
+        public List<DepRequiredItem> DepRequiredItems { get; init; } = [];
+    }
+
+    private sealed class DepRequiredItem
+    {
+        public string TkNonRef { get; init; } = "";
     }
 }
 
-// ── Galileo session DTO (file-scoped to avoid polluting namespace) ─────────
+// ── Galileo session DTO ──────────────────────────────────────────────────────
 
 file sealed class GalileoSessionData
 {

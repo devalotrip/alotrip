@@ -14,6 +14,7 @@ public sealed class SearchFlightRequest
     public int InfantCount      { get; set; }
     public string Currency      { get; set; } = "VND";
     public string? AgentCode    { get; set; }
+    public string? PccCode      { get; set; }  // Galileo-specific: PCC to use for this search
 }
 
 public sealed class BookFlightRequest

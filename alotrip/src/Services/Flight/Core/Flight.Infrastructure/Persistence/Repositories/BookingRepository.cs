@@ -464,6 +464,9 @@ public sealed class BookingRepository(ApplicationDbContext db)
         return true;
     }
 
+    public async Task<IEnumerable<AgentPccEntity>> GetActivePccsByAgentIdAsync(int agentId, CancellationToken ct = default)
+        => await db.AgentPccs.Where(a => a.AgentId == agentId && a.Active).ToListAsync(ct);
+
     public IQueryable<SearchAnalyticEntity> GetSearchAnalyticsQuery()
         => db.SearchAnalytics;
 

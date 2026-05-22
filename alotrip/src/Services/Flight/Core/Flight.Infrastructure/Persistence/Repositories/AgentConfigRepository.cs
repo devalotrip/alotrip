@@ -121,6 +121,7 @@ public sealed class AgentConfigRepository(ApplicationDbContext db) : IAgentConfi
 
         return new AgentConfigDto
         {
+            AgentId              = agentId,
             AgentCode            = agentCode,
             GalileoActive        = galileoActive,
             LccVnActiveDomestic  = lccDomestic,
